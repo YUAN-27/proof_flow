@@ -11,7 +11,16 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-24.04
+    name: ${{ matrix.check }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            check: checks
+          - os: macos-15
+            check: checks (macOS)
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
@@ -23,7 +32,7 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Run Java unit tests
-        run: make test-java
+        run: make test-backend
 
       - uses: actions/setup-python@v6
         with:
@@ -39,7 +48,8 @@ jobs:
       - name: Install frontend dependencies
         run: npm --prefix frontend install --no-audit --no-fund
       - name: Lint and build frontend
-        run: make check-frontend
+        run: make test-frontend
 
       - name: Validate Compose configuration
+        if: runner.os == 'Linux'
         run: cp .env.example .env && make config

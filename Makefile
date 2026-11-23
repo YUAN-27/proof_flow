@@ -3,17 +3,19 @@ MVN ?= mvn
 NPM ?= npm
 PYTHON ?= python
 
-.DEFAULT_GOAL := help
+.DEFAULT_GOAL := all
 
-.PHONY: help config build up ps test-java check-frontend test-agent
+.PHONY: all help config build up test test-backend test-frontend test-agent
+
+all: test
 
 help:
+	@echo make test            Run all project checks
 	@echo make config          Validate the Compose configuration
 	@echo make build           Build the Compose images
 	@echo make up              Build and start the Compose services
-	@echo make ps              Show Compose service status
-	@echo make test-java       Run business API tests
-	@echo make check-frontend  Lint and build the frontend
+	@echo make test-backend    Run business API tests
+	@echo make test-frontend   Lint and build the frontend
 	@echo make test-agent      Run agent service tests
 
 config:
@@ -25,15 +27,14 @@ build:
 up:
 	$(DOCKER) compose up --build --wait
 
-ps:
-	$(DOCKER) compose ps
+test: test-backend test-frontend test-agent
 
-test-java:
+test-backend:
 	$(MVN) -f business-api/pom.xml test
 
-check-frontend:
+test-frontend:
 	$(NPM) --prefix frontend run lint
 	$(NPM) --prefix frontend run build
 
 test-agent:
-	cd agent-service && $(PYTHON) -m pytest
+	$(PYTHON) -m pytest --rootdir=agent-service -o pythonpath=. agent-service/tests
