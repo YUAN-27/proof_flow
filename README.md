@@ -13,7 +13,19 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 
 ## 本地启动
 
-需要 Docker 与 Compose v2。在仓库根目录运行：
+仓库根目录的 `Makefile` 统一常用任务。安装 GNU Make 后，运行 `make` 查看命令。
+
+Windows PowerShell 首次启动前，在仓库根目录执行 `Copy-Item .env.example .env`。已有 `.env` 时保留现有文件。然后运行：
+
+```powershell
+make config
+make up
+make ps
+```
+
+只构建镜像可运行 `make build`。
+
+需要 Docker 与 Compose v2。也可以在仓库根目录直接运行下列命令（POSIX shell）：
 
 ```sh
 cp .env.example .env
@@ -27,6 +39,8 @@ docker compose ps
 
 ## 单模块检查
 
+安装各模块依赖后，可以运行 `make test-java`、`make check-frontend` 和 `make test-agent`。Python 虚拟环境需要先激活，或通过 `make test-agent PYTHON=解释器路径` 指定解释器。
+
 ```sh
 (cd business-api && mvn test)
 (cd frontend && npm install && npm run lint && npm run build)
@@ -34,6 +48,10 @@ docker compose ps
 ```
 
 Java 需要 JDK 21 和 Maven，前端需要 Node.js 22.12 或更新版本，Agent 容器使用 Python 3.12。单独开发前端时，用 `mvn spring-boot:run` 启动 Java，再用 `npm run dev` 启动 Vite。
+
+## GitHub Actions
+
+向 `main` 提交 PR 或推送时，CI 运行 Java 和 Agent 单元测试、前端 lint 与构建，以及 Compose 配置校验。
 
 ## 实现顺序
 
