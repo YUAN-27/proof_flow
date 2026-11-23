@@ -13,7 +13,19 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 
 ## 本地启动
 
-需要 Docker 与 Compose v2。在仓库根目录运行：
+Windows、Linux 和 macOS 共用仓库根目录的 `Makefile`。安装 GNU Make 与 Docker Compose v2 后，运行 `make help` 查看命令。
+
+首次启动前，在仓库根目录复制环境文件。Windows PowerShell 执行 `Copy-Item .env.example .env`，Linux 和 macOS 的 shell 执行 `cp .env.example .env`。已有 `.env` 时保留现有文件。然后运行：
+
+```powershell
+make config
+make up
+docker compose ps
+```
+
+只构建镜像可运行 `make build`。
+
+需要 Docker 与 Compose v2。也可以在仓库根目录直接运行下列命令（POSIX shell）：
 
 ```sh
 cp .env.example .env
@@ -27,6 +39,8 @@ docker compose ps
 
 ## 单模块检查
 
+安装各模块依赖后，运行 `make` 或 `make test` 完成全部检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。运行 Python 测试前先激活虚拟环境，或通过 `make test-agent PYTHON=python3` 指定已安装测试依赖的解释器。
+
 ```sh
 (cd business-api && mvn test)
 (cd frontend && npm install && npm run lint && npm run build)
@@ -34,6 +48,10 @@ docker compose ps
 ```
 
 Java 需要 JDK 21 和 Maven，前端需要 Node.js 22.12 或更新版本，Agent 容器使用 Python 3.12。单独开发前端时，用 `mvn spring-boot:run` 启动 Java，再用 `npm run dev` 启动 Vite。
+
+## GitHub Actions
+
+向 `main` 提交 PR 或推送时，CI 在 Linux 和 macOS 上运行 Java 和 Agent 单元测试、前端 lint 与构建。Linux job 还校验 Compose 配置。
 
 ## 实现顺序
 
