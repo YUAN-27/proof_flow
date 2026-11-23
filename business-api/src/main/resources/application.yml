@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: business-api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

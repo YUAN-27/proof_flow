@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProofFlow event envelope",
+  "type": "object",
+  "required": [
+    "event_id", "event_type", "schema_version", "tenant_id", "aggregate_type",
+    "aggregate_id", "aggregate_version", "occurred_at", "trace_id", "payload"
+  ],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "event_type": {"type": "string", "minLength": 1},
+    "schema_version": {"const": 1},
+    "tenant_id": {"type": "string", "format": "uuid"},
+    "aggregate_type": {"type": "string", "minLength": 1},
+    "aggregate_id": {"type": "string", "format": "uuid"},
+    "aggregate_version": {"type": "integer", "minimum": 1},
+    "occurred_at": {"type": "string", "format": "date-time", "pattern": "Z$"},
+    "trace_id": {"type": "string", "minLength": 1},
+    "payload": {"type": "object"}
+  }
+}

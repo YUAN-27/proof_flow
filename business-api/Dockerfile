@@ -1,0 +1,13 @@
+FROM maven:3.9.11-eclipse-temurin-21 AS build
+WORKDIR /build
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B package
+
+FROM eclipse-temurin:21-jre-noble
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=build /build/target/business-api-0.1.0-SNAPSHOT.jar ./app.jar
+USER 10001:10001
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

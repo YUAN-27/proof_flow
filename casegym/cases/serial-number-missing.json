@@ -1,0 +1,17 @@
+{
+  "case_id": "synthetic-serial-number-missing",
+  "template_family": "serial-number-mismatch",
+  "split": "dev",
+  "dispute_type": "serial_number_mismatch",
+  "evidence_versions": [
+    {"id": "order-1", "version": 1, "text": "订单记录序列号为 SN123。"},
+    {"id": "photo-1", "version": 1, "text": "包装标签模糊，无法读取序列号。"}
+  ],
+  "timeline_events": [],
+  "expected_claims": ["订单记录序列号为 SN123"],
+  "forbidden_claims": ["实收设备的序列号已确认与订单不符"],
+  "expected_gaps": ["实收设备的可读序列号照片"],
+  "allowed_actions": ["get_case", "list_evidence", "read_evidence", "request_evidence"],
+  "fault_schedule": [],
+  "rubric": ["有来源地说明订单序列号", "指出缺证并提出清晰照片的补证需求"]
+}

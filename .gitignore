@@ -24,3 +24,8 @@ Thumbs.db
 *.db
 *.log
 data/local/
+
+# Java and frontend build output
+target/
+node_modules/
+dist/

@@ -1,0 +1,15 @@
+{
+  "event_id": "869806ea-a9c0-4be1-a9ec-62cb40e03e17",
+  "event_type": "evidence.ready",
+  "schema_version": 1,
+  "tenant_id": "f72de48f-a218-414c-aeca-a7b8ee238826",
+  "aggregate_type": "case",
+  "aggregate_id": "cb9d71c5-81da-41c5-905b-b8b868e6be65",
+  "aggregate_version": 2,
+  "occurred_at": "2026-11-19T08:00:00Z",
+  "trace_id": "casegym-serial-number",
+  "payload": {
+    "evidence_version_id": "3665bd39-be71-4426-ac29-38cc0170c76e",
+    "evidence_set_version": 1
+  }
+}

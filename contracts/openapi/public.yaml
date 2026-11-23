@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: ProofFlow Business API
+  version: 0.1.0
+paths:
+  /api/v1/health:
+    get:
+      operationId: getBusinessHealth
+      summary: Check whether the business API is responding
+      responses:
+        '200':
+          description: Business API is serving requests
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [service, status]
+                properties:
+                  service:
+                    const: business-api
+                  status:
+                    const: ok

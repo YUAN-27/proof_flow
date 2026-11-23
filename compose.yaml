@@ -1,0 +1,75 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:${PROOFFLOW_WEB_PORT:-8080}:8080"
+    depends_on:
+      business-api:
+        condition: service_healthy
+    networks:
+      - web
+
+  business-api:
+    build: ./business-api
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+    networks:
+      - web
+      - backend
+
+  agent-api:
+    build: ./agent-service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).close()"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - backend
+
+  mysql:
+    image: mysql:8.4.8
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-proofflow}
+      MYSQL_USER: ${MYSQL_USER:-proofflow}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Copy .env.example to .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Copy .env.example to .env}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u \"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - backend
+
+  minio:
+    build: ./infra/minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Copy .env.example to .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Copy .env.example to .env}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9000/minio/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - backend
+
+networks:
+  web:
+  backend:
+    internal: true
+
+volumes:
+  mysql-data:
+  minio-data:
