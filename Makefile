@@ -37,4 +37,4 @@ test-frontend:
 	$(NPM) --prefix frontend run build
 
 test-agent:
-	$(PYTHON) -m pytest --rootdir=agent-service -o pythonpath=. agent-service/tests
+	$(PYTHON) -m pytest --rootdir=agent-service agent-service/tests
