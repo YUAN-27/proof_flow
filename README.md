@@ -13,7 +13,7 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 
 ## 本地启动
 
-Windows、Linux 和 macOS 共用仓库根目录的 `Makefile`。安装 GNU Make 与 Docker Compose v2 后，运行 `make help` 查看命令。
+Windows、Linux 和 macOS 共用仓库根目录的 `Makefile`。安装 GNU Make 与 Docker Compose v2 后，运行 `make` 或 `make help` 查看命令。
 
 首次启动前，在仓库根目录复制环境文件。Windows PowerShell 执行 `Copy-Item .env.example .env`，Linux 和 macOS 的 shell 执行 `cp .env.example .env`。已有 `.env` 时保留现有文件。然后运行：
 
@@ -39,7 +39,7 @@ docker compose ps
 
 ## 单模块检查
 
-安装各模块依赖后，运行 `make` 或 `make test` 完成全部检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。运行 Python 测试前先激活虚拟环境，或通过 `make test-agent PYTHON=python3` 指定已安装测试依赖的解释器。
+安装各模块依赖后，运行 `make test` 完成全部检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。运行 Python 测试前先激活虚拟环境，或通过 `make test-agent PYTHON=python3` 指定已安装测试依赖的解释器。
 
 ```sh
 (cd business-api && mvn test)

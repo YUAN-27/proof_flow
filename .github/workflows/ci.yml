@@ -18,7 +18,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-            check: checks
+            check: checks(linux)
           - os: macos-15
             check: checks (macOS)
     timeout-minutes: 15

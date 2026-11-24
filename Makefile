@@ -7,7 +7,7 @@ PYTHON ?= python
 
 .PHONY: all help config build up test test-backend test-frontend test-agent
 
-all: test
+all: help
 
 help:
 	@echo make test            Run all project checks
