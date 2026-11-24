@@ -23,7 +23,7 @@ make up
 docker compose ps
 ```
 
-只构建镜像可运行 `make build`。
+运行 `make` 或 `make build` 只构建镜像。
 
 需要 Docker 与 Compose v2。也可以在仓库根目录直接运行下列命令（POSIX shell）：
 
@@ -39,7 +39,7 @@ docker compose ps
 
 ## 单模块检查
 
-安装各模块依赖后，运行 `make` 或 `make test` 完成全部检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。运行 Python 测试前先激活虚拟环境，或通过 `make test-agent PYTHON=python3` 指定已安装测试依赖的解释器。
+安装各模块依赖后，运行 `make test` 完成全部检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。运行 Python 测试前先激活虚拟环境，或通过 `make test-agent PYTHON=python3` 指定已安装测试依赖的解释器。
 
 ```sh
 (cd business-api && mvn test)
