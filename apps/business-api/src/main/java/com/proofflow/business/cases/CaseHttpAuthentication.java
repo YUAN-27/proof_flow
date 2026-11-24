@@ -15,7 +15,7 @@ import java.security.MessageDigest;
 
 /** Opt-in identity for local HTTP integration until a user authentication mechanism is available. */
 @Configuration(proxyBeanMethods = false)
-class CaseHttpAuthentication implements WebMvcConfigurer {
+class CaseHttpAuthentication implements WebMvcConfigurer, HandlerInterceptor {
     static final String ACTOR_ATTRIBUTE = "caseActor";
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -36,19 +36,19 @@ class CaseHttpAuthentication implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new HandlerInterceptor() {
-            @Override
-            public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-                String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-                if (actor == null || !matchesBearerToken(authorization)) {
-                    response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    return false;
-                }
-                request.setAttribute(ACTOR_ATTRIBUTE, actor);
-                return true;
-            }
-        }).addPathPatterns(CaseController.PATH, CaseController.PATH + "/**");
+        registry.addInterceptor(this).addPathPatterns(CaseController.PATH, CaseController.PATH + "/**");
+    }
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (actor == null || !matchesBearerToken(authorization)) {
+            response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+        }
+        request.setAttribute(ACTOR_ATTRIBUTE, actor);
+        return true;
     }
 
     private boolean matchesBearerToken(String authorization) {
