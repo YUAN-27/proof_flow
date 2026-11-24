@@ -21,7 +21,7 @@ jobs:
             check: checks(linux)
           - os: macos-15
             check: checks (macOS)
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
         with:
@@ -31,25 +31,39 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Run Java unit tests
-        run: make test-backend
-
+          cache: maven
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Install Agent test dependencies
-        run: python -m pip install -r agent-service/requirements-dev.txt
-      - name: Run Agent unit tests
-        run: make test-agent
-
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.13.8'
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
       - name: Install frontend dependencies
-        run: npm --prefix frontend install --no-audit --no-fund
-      - name: Lint and build frontend
-        run: make test-frontend
+        run: npm --prefix apps/frontend install --no-audit --no-fund
+      - name: Run module tests and frontend checks
+        run: make test
 
       - name: Validate Compose configuration
+        id: compose
         if: runner.os == 'Linux'
         run: cp .env.example .env && make config
+
+      - name: Build and start the stack
+        if: runner.os == 'Linux'
+        timeout-minutes: 20
+        run: make up
+
+      - name: Run Compose smoke tests
+        if: runner.os == 'Linux'
+        run: make test-integration
+
+      - name: Print Compose logs on failure
+        if: failure() && steps.compose.outcome == 'success'
+        run: docker compose logs --no-color
+
+      - name: Clean up the CI stack
+        if: always() && steps.compose.outcome == 'success'
+        run: docker compose down --volumes
