@@ -3,11 +3,11 @@ MVN ?= mvn
 NPM ?= npm
 PYTHON ?= python
 
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL := build
 
 .PHONY: all help config build up test test-backend test-frontend test-agent
 
-all: help
+all: build
 
 help:
 	@echo make test            Run all project checks

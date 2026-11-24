@@ -13,7 +13,7 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 
 ## 本地启动
 
-Windows、Linux 和 macOS 共用仓库根目录的 `Makefile`。安装 GNU Make 与 Docker Compose v2 后，运行 `make` 或 `make help` 查看命令。
+Windows、Linux 和 macOS 共用仓库根目录的 `Makefile`。安装 GNU Make 与 Docker Compose v2 后，运行 `make help` 查看命令。
 
 首次启动前，在仓库根目录复制环境文件。Windows PowerShell 执行 `Copy-Item .env.example .env`，Linux 和 macOS 的 shell 执行 `cp .env.example .env`。已有 `.env` 时保留现有文件。然后运行：
 
@@ -23,7 +23,7 @@ make up
 docker compose ps
 ```
 
-只构建镜像可运行 `make build`。
+运行 `make` 或 `make build` 只构建镜像。
 
 需要 Docker 与 Compose v2。也可以在仓库根目录直接运行下列命令（POSIX shell）：
 
