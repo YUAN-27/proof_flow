@@ -3,6 +3,7 @@ MVN ?= mvn
 NPM ?= npm
 UV ?= uv
 PYTHON ?= python
+MVN_OPTS ?= -Dmaven.wagon.http.retryHandler.count=5
 
 .DEFAULT_GOAL := build
 
@@ -32,7 +33,7 @@ up:
 test: test-backend test-frontend test-agent
 
 test-backend:
-	$(MVN) -f apps/business-api/pom.xml test
+	$(MVN) $(MVN_OPTS) -f apps/business-api/pom.xml test
 
 test-frontend:
 	$(NPM) --prefix apps/frontend run lint
