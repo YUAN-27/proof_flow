@@ -5,8 +5,6 @@ UV ?= uv
 PYTHON ?= python
 MVN_OPTS ?= -Dmaven.wagon.http.retryHandler.count=5
 
-.DEFAULT_GOAL := build
-
 .PHONY: all help config build up test test-backend test-frontend test-agent test-integration
 
 all: build
