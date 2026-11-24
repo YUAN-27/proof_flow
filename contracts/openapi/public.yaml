@@ -21,3 +21,145 @@ paths:
                     const: business-api
                   status:
                     const: ok
+  /api/v1/cases:
+    post:
+      operationId: createCase
+      summary: Create a case with status OPEN and version 1
+      security:
+        - caseBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  description: Nonblank case title
+      responses:
+        '201':
+          description: Case created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '400':
+          description: Invalid JSON or missing or invalid title
+        '401':
+          $ref: '#/components/responses/CaseUnauthorized'
+  /api/v1/cases/{caseId}:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    get:
+      operationId: getCase
+      summary: Read a case in the authenticated tenant
+      security:
+        - caseBearer: []
+      responses:
+        '200':
+          $ref: '#/components/responses/CaseFound'
+        '400':
+          description: Invalid case identifier
+        '401':
+          $ref: '#/components/responses/CaseUnauthorized'
+        '404':
+          $ref: '#/components/responses/CaseNotFound'
+  /api/v1/cases/{caseId}/status:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    patch:
+      operationId: updateCaseStatus
+      summary: Update the status using the current version
+      security:
+        - caseBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion, status]
+              properties:
+                expectedVersion:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                status:
+                  $ref: '#/components/schemas/CaseStatus'
+      responses:
+        '200':
+          $ref: '#/components/responses/CaseFound'
+        '400':
+          description: Invalid case identifier, JSON, version, or status
+        '401':
+          $ref: '#/components/responses/CaseUnauthorized'
+        '404':
+          $ref: '#/components/responses/CaseNotFound'
+        '409':
+          description: Stale version or invalid status transition
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                required: [code]
+                properties:
+                  code:
+                    type: string
+                    enum: [VERSION_CONFLICT, INVALID_STATUS_TRANSITION]
+components:
+  securitySchemes:
+    caseBearer:
+      type: http
+      scheme: bearer
+      description: Opt-in local integration credential configured on the server
+  parameters:
+    CaseId:
+      in: path
+      name: caseId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    CaseFound:
+      description: Case snapshot
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Case'
+    CaseUnauthorized:
+      description: Missing or invalid bearer credential, or the local API is disabled
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            const: Bearer
+    CaseNotFound:
+      description: Case does not exist in the authenticated tenant
+  schemas:
+    CaseStatus:
+      type: string
+      enum: [OPEN, IN_REVIEW, CLOSED]
+    Case:
+      type: object
+      required: [id, title, status, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          $ref: '#/components/schemas/CaseStatus'
+        version:
+          type: integer
+          format: int64
+          minimum: 1
