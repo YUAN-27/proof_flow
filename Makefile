@@ -1,7 +1,7 @@
 DOCKER ?= docker
 MVN ?= mvn
 NPM ?= npm
-PYTHON ?= python
+UV ?= uv
 
 .DEFAULT_GOAL := build
 
@@ -30,11 +30,11 @@ up:
 test: test-backend test-frontend test-agent
 
 test-backend:
-	$(MVN) -f business-api/pom.xml test
+	$(MVN) -f apps/business-api/pom.xml test
 
 test-frontend:
-	$(NPM) --prefix frontend run lint
-	$(NPM) --prefix frontend run build
+	$(NPM) --prefix apps/frontend run lint
+	$(NPM) --prefix apps/frontend run build
 
 test-agent:
-	$(PYTHON) -m pytest --rootdir=agent-service agent-service/tests
+	$(UV) run --project apps/agent-service --locked pytest --rootdir=apps/agent-service apps/agent-service/tests

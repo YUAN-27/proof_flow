@@ -1,6 +1,6 @@
 services:
   frontend:
-    build: ./frontend
+    build: ./apps/frontend
     ports:
       - "127.0.0.1:${PROOFFLOW_WEB_PORT:-8080}:8080"
     depends_on:
@@ -10,7 +10,7 @@ services:
       - web
 
   business-api:
-    build: ./business-api
+    build: ./apps/business-api
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/actuator/health"]
       interval: 5s
@@ -22,7 +22,7 @@ services:
       - backend
 
   agent-api:
-    build: ./agent-service
+    build: ./apps/agent-service
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).close()"]
       interval: 5s

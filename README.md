@@ -2,14 +2,21 @@
 
 ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引用的调查报告，供人工审核。
 
-| 目录 | 当前入口 |
+## 项目结构
+
+根目录的 `Makefile`、`compose.yaml` 和 `.github/workflows/` 分别提供任务命令、容器编排和 CI 配置。
+
+| 目录 | 用途 |
 | --- | --- |
-| `frontend/` | Vue 3 + Vite 页面，通过同源代理检查 Java API |
-| `business-api/` | Java 21 + Spring Boot，提供 `GET /api/v1/health` |
-| `agent-service/` | Python + FastAPI，提供容器网络内的 `GET /health` |
+| `apps/frontend/` | Vue 3 + Vite 页面，通过同源代理检查 Java API |
+| `apps/business-api/` | Java 21 + Spring Boot，提供 `GET /api/v1/health` |
+| `apps/agent-service/` | Python + FastAPI，提供容器网络内的 `GET /health`；依赖由 uv 管理 |
 | `contracts/` | 公开健康检查的 OpenAPI、事件信封 Schema 与示例 |
 | `infra/minio/` | 从固定版本的社区版源码构建 MinIO |
-| `casegym/` | 序列号争议的合成开发样例 |
+| `examples/casegym/` | 序列号争议的合成开发样例 |
+| `docs/` | 项目设计与技术文档 |
+
+源码、依赖配置和单元测试与各自的服务放在一起。跨服务集成测试可以在需要时放入根目录的 `tests/`。
 
 ## 本地启动
 
@@ -39,15 +46,17 @@ docker compose ps
 
 ## 单模块检查
 
-安装各模块依赖后，运行 `make test` 完成全部检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。运行 Python 测试前先激活虚拟环境，或通过 `make test-agent PYTHON=python3` 指定已安装测试依赖的解释器。
+准备各模块的工具和依赖后，运行 `make test` 完成全部检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
 
 ```sh
-(cd business-api && mvn test)
-(cd frontend && npm install && npm run lint && npm run build)
-(cd agent-service && python3 -m venv .venv && .venv/bin/python -m pip install -r requirements-dev.txt && .venv/bin/python -m pytest)
+(cd apps/business-api && mvn test)
+(cd apps/frontend && npm install && npm run lint && npm run build)
+(cd apps/agent-service && uv run --locked pytest)
 ```
 
-Java 需要 JDK 21 和 Maven，前端需要 Node.js 22.12 或更新版本，Agent 容器使用 Python 3.12。单独开发前端时，用 `mvn spring-boot:run` 启动 Java，再用 `npm run dev` 启动 Vite。
+Java 需要 JDK 21 和 Maven，前端需要 Node.js 22.12 或更新版本，Agent 容器使用 Python 3.12。单独开发前端时，在 `apps/business-api/` 运行 `mvn spring-boot:run`，再在 `apps/frontend/` 运行 `npm run dev`。
+
+修改 Agent 的 `pyproject.toml` 后，在 `apps/agent-service/` 运行 `uv lock`，将更新后的 `uv.lock` 一并提交。Docker 构建从同一份锁文件安装运行依赖。
 
 ## GitHub Actions
 
