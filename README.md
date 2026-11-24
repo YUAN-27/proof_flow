@@ -14,9 +14,10 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 | `contracts/` | 公开健康检查的 OpenAPI、事件信封 Schema 与示例 |
 | `infra/minio/` | 从固定版本的社区版源码构建 MinIO |
 | `examples/casegym/` | 序列号争议的合成开发样例 |
+| `tests/integration/` | 验证 Compose 启动后的跨服务 HTTP 路径 |
 | `docs/` | 项目设计与技术文档 |
 
-源码、依赖配置和单元测试与各自的服务放在一起。跨服务集成测试可以在需要时放入根目录的 `tests/`。
+源码、依赖配置和单元测试与各自的服务放在一起。
 
 ## 本地启动
 
@@ -46,7 +47,9 @@ docker compose ps
 
 ## 单模块检查
 
-准备各模块的工具和依赖后，运行 `make test` 完成全部检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
+完整命令、测试边界和 CI 排查见[测试指南](docs/testing.md)。
+
+准备各模块的工具和依赖后，运行 `make test` 执行模块测试和前端检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
 
 ```sh
 (cd apps/business-api && mvn test)
@@ -60,7 +63,9 @@ Java 需要 JDK 21 和 Maven，前端需要 Node.js 22.12 或更新版本，Agen
 
 ## GitHub Actions
 
-向 `main` 提交 PR 或推送时，CI 在 Linux 和 macOS 上运行 Java 和 Agent 单元测试、前端 lint 与构建。Linux job 还校验 Compose 配置。
+向 `main` 提交 PR 或推送时，GitHub Actions 在 Linux 和 macOS 上运行 `make test`。Linux 还运行 `make config`、`make up` 和 `make test-integration`。启动或测试失败时，容器日志会记录到 Actions；测试结束后，runner 清理临时容器和数据卷。
+
+本地也可以在 `make up` 成功后运行 `make test-integration`。它向前端发送真实 HTTP 请求，验证首页和转发给 Java 后端的健康接口。默认地址为 `http://127.0.0.1:8080`，自定义端口时可用环境变量 `PROOFFLOW_SMOKE_URL` 指定完整地址。
 
 ## 实现顺序
 
