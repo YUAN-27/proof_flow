@@ -5,7 +5,7 @@ UV ?= uv
 PYTHON ?= python
 MVN_OPTS ?= -Dmaven.wagon.http.retryHandler.count=5
 
-.PHONY: all help config build up test test-backend test-frontend test-agent test-integration
+.PHONY: all help config build up test test-backend test-frontend test-agent test-integration test-case-integration
 
 all: build
 
@@ -18,6 +18,7 @@ help:
 	@echo make test-frontend   Lint and build the frontend
 	@echo make test-agent      Run agent service tests
 	@echo make test-integration  Smoke test the running Compose stack
+	@echo make test-case-integration  Verify the case API on a disposable stack
 
 config:
 	$(DOCKER) compose config --quiet
@@ -42,3 +43,6 @@ test-agent:
 
 test-integration:
 	$(PYTHON) tests/integration/compose_smoke.py
+
+test-case-integration:
+	$(PYTHON) tests/integration/case_smoke.py
