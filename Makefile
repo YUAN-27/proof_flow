@@ -3,8 +3,6 @@ MVN ?= mvn
 NPM ?= npm
 PYTHON ?= python
 
-.DEFAULT_GOAL := build
-
 .PHONY: all help config build up test test-backend test-frontend test-agent
 
 all: build
