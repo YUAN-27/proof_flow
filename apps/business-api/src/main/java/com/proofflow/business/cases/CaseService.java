@@ -1,69 +1,63 @@
 package com.proofflow.business.cases;
 
 import com.proofflow.business.identity.ActorContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-/** In-process case lifecycle and audit history. Callers must establish actor identity. */
+/** Case lifecycle and audit history. Callers must establish actor identity. */
 @Service
 public class CaseService {
+    private final CaseStore store;
     private final Clock clock;
-    private final Map<CaseKey, CaseHistory> cases = new HashMap<>();
 
-    public CaseService() {
-        this(Clock.systemUTC());
+    @Autowired
+    public CaseService(CaseStore store) {
+        this(store, Clock.systemUTC());
     }
 
-    CaseService(Clock clock) {
+    CaseService(CaseStore store, Clock clock) {
+        this.store = Objects.requireNonNull(store);
         this.clock = Objects.requireNonNull(clock);
     }
 
-    public synchronized CaseSnapshot create(ActorContext actor, String title) {
+    public CaseSnapshot create(ActorContext actor, String title) {
         Objects.requireNonNull(actor, "actor");
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("title must not be blank");
         }
 
-        CaseKey key;
+        CaseSnapshot created;
+        AuditEntry entry;
         do {
-            key = new CaseKey(actor.tenantId(), UUID.randomUUID());
-        } while (cases.containsKey(key));
-
-        CaseSnapshot created = new CaseSnapshot(key.caseId(), key.tenantId(), title, Status.OPEN, 1);
-        AuditEntry entry = auditEntry(actor, created, Operation.CREATED, null);
-        cases.put(key, new CaseHistory(created, List.of(entry)));
+            created = new CaseSnapshot(UUID.randomUUID(), actor.tenantId(), title, Status.OPEN, 1);
+            entry = auditEntry(actor, created, Operation.CREATED, null);
+        } while (!store.insert(created, entry));
         return created;
     }
 
-    public synchronized Optional<CaseSnapshot> find(ActorContext actor, UUID caseId) {
-        CaseHistory history = cases.get(keyFor(actor, caseId));
-        return history == null ? Optional.empty() : Optional.of(history.snapshot());
+    public Optional<CaseSnapshot> find(ActorContext actor, UUID caseId) {
+        return store.find(Objects.requireNonNull(actor, "actor").tenantId(), Objects.requireNonNull(caseId, "caseId"));
     }
 
-    public synchronized CaseSnapshot updateStatus(
+    public CaseSnapshot updateStatus(
         ActorContext actor, UUID caseId, long expectedVersion, Status nextStatus
     ) {
-        CaseKey key = keyFor(actor, caseId);
+        String tenantId = Objects.requireNonNull(actor, "actor").tenantId();
+        Objects.requireNonNull(caseId, "caseId");
         Objects.requireNonNull(nextStatus, "nextStatus");
         if (expectedVersion < 1) {
             throw new IllegalArgumentException("expectedVersion must be positive");
         }
 
-        CaseHistory history = cases.get(key);
-        if (history == null) {
-            throw new UpdateRejected(UpdateFailure.NOT_FOUND);
-        }
-
-        CaseSnapshot current = history.snapshot();
+        CaseSnapshot current = store.find(tenantId, caseId)
+            .orElseThrow(() -> new UpdateRejected(UpdateFailure.NOT_FOUND));
         if (current.version() != expectedVersion) {
             throw new UpdateRejected(UpdateFailure.VERSION_CONFLICT);
         }
@@ -74,20 +68,17 @@ public class CaseService {
         CaseSnapshot updated = new CaseSnapshot(
             current.id(), current.tenantId(), current.title(), nextStatus, current.version() + 1
         );
-        List<AuditEntry> audit = new ArrayList<>(history.audit());
-        audit.add(auditEntry(actor, updated, Operation.STATUS_UPDATED, current.status()));
-        cases.put(key, new CaseHistory(updated, List.copyOf(audit)));
+        AuditEntry entry = auditEntry(actor, updated, Operation.STATUS_UPDATED, current.status());
+        if (!store.updateIfVersionMatches(expectedVersion, updated, entry)) {
+            throw new UpdateRejected(UpdateFailure.VERSION_CONFLICT);
+        }
         return updated;
     }
 
-    public synchronized List<AuditEntry> auditTrail(ActorContext actor, UUID caseId) {
-        CaseHistory history = cases.get(keyFor(actor, caseId));
-        return history == null ? List.of() : history.audit();
-    }
-
-    private static CaseKey keyFor(ActorContext actor, UUID caseId) {
-        Objects.requireNonNull(actor, "actor");
-        return new CaseKey(actor.tenantId(), Objects.requireNonNull(caseId, "caseId"));
+    public List<AuditEntry> auditTrail(ActorContext actor, UUID caseId) {
+        return store.auditTrail(
+            Objects.requireNonNull(actor, "actor").tenantId(), Objects.requireNonNull(caseId, "caseId")
+        );
     }
 
     private AuditEntry auditEntry(ActorContext actor, CaseSnapshot snapshot, Operation operation, Status previous) {
@@ -136,8 +127,4 @@ public class CaseService {
         String tenantId, String actorId, UUID caseId, Operation operation, Instant occurredAt,
         long version, Status previousStatus, Status status
     ) {}
-
-    private record CaseKey(String tenantId, UUID caseId) {}
-
-    private record CaseHistory(CaseSnapshot snapshot, List<AuditEntry> audit) {}
 }
