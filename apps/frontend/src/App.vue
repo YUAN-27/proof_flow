@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import CaseWorkspace from './cases/CaseWorkspace.vue'
 
 const status = ref('正在检查业务 API')
 const pending = ref(false)
@@ -32,9 +33,14 @@ onMounted(checkHealth)
 
 <template>
   <main>
-    <h1>ProofFlow Investigator</h1>
-    <p role="status">{{ status }}</p>
-    <button type="button" :disabled="pending" @click="checkHealth">重新检查</button>
+    <header class="app-header">
+      <h1>ProofFlow Investigator</h1>
+      <div class="health">
+        <p role="status">{{ status }}</p>
+        <button type="button" :disabled="pending" @click="checkHealth">重新检查</button>
+      </div>
+    </header>
+    <CaseWorkspace />
   </main>
 </template>
 
@@ -47,13 +53,35 @@ body {
 }
 
 main {
-  max-width: 44rem;
-  margin: 4rem auto;
+  max-width: 65rem;
+  margin: 2rem auto;
   padding: 0 1.5rem;
 }
 
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dbe3ed;
+}
+
+h1 { margin: 0; font-size: 1.25rem; }
+.health { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
+.health p { margin: 0; color: #46566b; font-size: 0.875rem; }
+
 button {
   padding: 0.5rem 0.875rem;
+  border: 1px solid #aab8c9;
+  border-radius: 0.4rem;
+  background: #fff;
+  color: inherit;
   font: inherit;
+  cursor: pointer;
 }
+
+button:disabled { cursor: default; opacity: 0.5; }
+button:focus-visible, input:focus-visible { outline: 2px solid #315f9d; outline-offset: 2px; }
 </style>

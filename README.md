@@ -23,6 +23,10 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 
 Windows、Linux 和 macOS 共用仓库根目录的 `Makefile`。安装 GNU Make 与 Docker Compose v2 后，运行 `make help` 查看命令。
 
+日常工单联调用 `make dev` 启动本地 Java 和 Vite，打开 `http://127.0.0.1:5173/`，在启动终端按 `Ctrl+C` 一起关闭。工具与本地配置见[工单联调指南](docs/case-api.md)。
+
+使用 Docker Compose 查看整套服务时，运行 `make up` 启动，运行 `make stop` 停止并保留数据卷。
+
 首次启动前，在仓库根目录复制环境文件。Windows PowerShell 执行 `Copy-Item .env.example .env`，Linux 和 macOS 的 shell 执行 `cp .env.example .env`。已有 `.env` 时保留现有文件。然后运行：
 
 ```powershell

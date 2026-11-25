@@ -34,7 +34,9 @@ $env:PROOFFLOW_SMOKE_URL = 'http://127.0.0.1:8081'
 make test-integration
 ```
 
-这组 smoke test 覆盖前端到 Java 的请求链路。Agent、MySQL 和 MinIO 的就绪状态由 Compose 健康检查确认。目前没有跨服务业务、数据库写入或对象存储读写测试。
+这组只读 smoke test 覆盖前端到 Java 的请求链路。Agent、MySQL 和 MinIO 的就绪状态由 Compose 健康检查确认。目前没有 Agent 业务调用、数据库写入或对象存储读写测试。
+
+工单 API 的写入回归单独使用 `make test-case-integration`，只在可丢弃的联调环境运行。它使用该环境的 `PROOFFLOW_CASES_TOKEN`，经前端代理验证无凭据拒绝、创建、读取、状态流转和版本冲突，并会创建一张合成工单。
 
 ## GitHub Actions
 
