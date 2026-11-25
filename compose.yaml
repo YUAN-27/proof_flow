@@ -11,6 +11,10 @@ services:
 
   business-api:
     build: ./apps/business-api
+    environment:
+      PROOFFLOW_CASES_TOKEN: ${PROOFFLOW_CASES_TOKEN:-}
+      PROOFFLOW_CASES_TENANT_ID: ${PROOFFLOW_CASES_TENANT_ID:-}
+      PROOFFLOW_CASES_ACTOR_ID: ${PROOFFLOW_CASES_ACTOR_ID:-}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/actuator/health"]
       interval: 5s
