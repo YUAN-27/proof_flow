@@ -28,7 +28,7 @@ class CaseServiceTest {
     private static final ActorContext REVIEWER = new ActorContext("tenant-a", "reviewer");
     private static final ActorContext OTHER_TENANT = new ActorContext("tenant-b", "reviewer");
 
-    private final CaseService service = new CaseService(Clock.fixed(NOW, ZoneOffset.UTC));
+    private final CaseService service = new CaseService(new InMemoryCaseStore(), Clock.fixed(NOW, ZoneOffset.UTC));
 
     @Test
     void createsAnOpenCaseAndRecordsWhoCreatedIt() {
