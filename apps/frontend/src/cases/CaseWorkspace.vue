@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import CaseEvidencePanel from './CaseEvidencePanel.vue'
 import { createCase, readCase, updateCaseStatus } from './caseApi.js'
 
 const states = {
@@ -147,6 +148,7 @@ function advanceCase() {
             </button>
             <button type="button" :disabled="!ready" @click="loadCase(selected.id)">刷新工单</button>
           </div>
+          <CaseEvidencePanel :key="selected.id" :case-id="selected.id" :token="token.trim()" />
         </template>
         <p v-else class="muted">创建一张工单，或输入已有工单 ID 查看详情。</p>
       </section>
