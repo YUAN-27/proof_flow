@@ -8,13 +8,19 @@
 make test
 ```
 
-运行前需准备 GNU Make、JDK 21 和 Maven、Python 3.12 和 uv，以及 Node.js 22.12 或更高版本。首次运行前端检查时，先执行 `npm --prefix apps/frontend install`。Agent 的测试依赖由 uv 从 `uv.lock` 同步。
+本地 `make test` 需要 GNU Make、JDK 21、Maven、Python 3.12 和 uv。Agent 的测试依赖由 uv 从 `uv.lock` 同步。
+
+如果电脑上装了多个 JDK，可以在本地 `.env.make` 里用 `JAVA_HOME :=` 指定 JDK 21 的安装路径。路径有空格时也直接填写，文件由 Git 忽略。
 
 - `make test-backend` 使用 Maven 运行 Java 测试。现有健康接口测试加载 Spring 应用上下文并使用 MockMvc，属于模块内 HTTP 测试。
 - `make test-agent` 使用 pytest 和 FastAPI TestClient 验证 Agent 的 `/health`。请求在 Python 进程内完成。
-- `make test-frontend` 运行 ESLint 和 Vite 构建。目前没有前端单元测试。
+- `make test-frontend` 运行 ESLint 和 Vite 构建。目前没有前端单元测试。运行前需准备 Node.js 22.12 或更高版本，并执行 `npm --prefix apps/frontend install`。
 
 这些检查不需要启动 Compose。Java 和 Agent 的健康接口测试也不访问其他服务。
+
+## 推送前检查
+
+新 clone 可执行 `git config --local core.hooksPath .githooks` 启用仓库提供的 Git hooks。Git 会在 `git push` 前运行 `make test`。测试失败时，推送终止。请在运行 Git 的终端中配置 Make、Maven、JDK 和 uv。
 
 ## 跨服务集成测试
 
@@ -40,4 +46,4 @@ make test-integration
 
 ## GitHub Actions
 
-面向 `main` 的 PR 和推送到 `main` 都会触发 CI。Linux 与 macOS 都执行 `make test`。Linux 还会执行 `make config`、`make up` 和 `make test-integration`。启动或测试失败时，在 Actions job 中查看 Compose 日志。job 结束时清理 runner 上的临时容器和数据卷。
+面向 `main` 的 PR 和推送到 `main` 都会触发 CI。Linux 与 macOS 在 `CI=true` 下执行 `make test`，同时运行 Java、Python 测试和前端检查。Linux 还会执行 `make config`、`make up` 和 `make test-integration`。启动或测试失败时，在 Actions job 中查看 Compose 日志。job 结束时清理 runner 上的临时容器和数据卷。

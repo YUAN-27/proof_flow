@@ -1,6 +1,17 @@
+-include .env.make
+
+ifneq ($(strip $(JAVA_HOME)),)
+export JAVA_HOME
+endif
+
 DOCKER ?= docker
+ifneq ($(filter Windows32 Windows_NT %mingw32 %mingw64,$(MAKE_HOST) $(OS)),)
+MVN ?= mvn.cmd
+NPM ?= npm.cmd
+else
 MVN ?= mvn
 NPM ?= npm
+endif
 NODE ?= node
 UV ?= uv
 PYTHON ?= python
@@ -11,17 +22,10 @@ MVN_OPTS ?= -Dmaven.wagon.http.retryHandler.count=5
 all: build
 
 help:
-	@echo make test            Run module tests and frontend checks
-	@echo make config          Validate the Compose configuration
 	@echo make build           Build the Compose images
-	@echo make up              Build and start the Compose services
-	@echo make stop            Stop the Compose services and keep their volumes
-	@echo make dev             Start Java and Vite for local development
-	@echo make test-backend    Run business API tests
-	@echo make test-frontend   Lint and build the frontend
-	@echo make test-agent      Run agent service tests
-	@echo make test-integration  Smoke test the running Compose stack
-	@echo make test-case-integration  Verify the case API on a disposable stack
+	@echo make test            Run local Java and Python tests
+	@echo make up              Start the Compose stack at http://127.0.0.1:8080/ by default
+	@echo make help            List the main commands
 
 config:
 	$(DOCKER) compose config --quiet
@@ -38,7 +42,11 @@ stop:
 dev:
 	$(NODE) scripts/dev.mjs
 
-test: test-backend test-frontend test-agent
+test: test-backend test-agent
+
+ifeq ($(CI),true)
+test: test-frontend
+endif
 
 test-backend:
 	$(MVN) $(MVN_OPTS) -f apps/business-api/pom.xml test

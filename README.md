@@ -9,9 +9,9 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 | 目录 | 用途 |
 | --- | --- |
 | `apps/frontend/` | Vue 3 + Vite 页面，通过同源代理检查 Java API |
-| `apps/business-api/` | Java 21 + Spring Boot，提供 `GET /api/v1/health` |
+| `apps/business-api/` | Java 21 + Spring Boot，工单领域逻辑、HTTP API 和审计 |
 | `apps/agent-service/` | Python + FastAPI，提供容器网络内的 `GET /health`；依赖由 uv 管理 |
-| `contracts/` | 公开健康检查的 OpenAPI、事件信封 Schema 与示例 |
+| `contracts/` | 公开 HTTP API 的 OpenAPI、事件信封 Schema 与示例 |
 | `infra/minio/` | 从固定版本的社区版源码构建 MinIO |
 | `examples/casegym/` | 序列号争议的合成开发样例 |
 | `tests/integration/` | 验证 Compose 启动后的跨服务 HTTP 路径 |
@@ -19,13 +19,13 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 
 源码、依赖配置和单元测试与各自的服务放在一起。
 
+Java 的 Maven 模块位于 [`apps/business-api/`](apps/business-api)，源码放在 `src/main/java`。从 [`BusinessApplication`](apps/business-api/src/main/java/com/proofflow/business/BusinessApplication.java) 启动应用，工单状态流转和审计由 [`CaseService`](apps/business-api/src/main/java/com/proofflow/business/cases/CaseService.java) 管理，HTTP 接口由 [`CaseController`](apps/business-api/src/main/java/com/proofflow/business/cases/CaseController.java) 提供。Java 测试在 [`src/test/java`](apps/business-api/src/test/java)。
+
 ## 本地启动
 
 Windows、Linux 和 macOS 共用仓库根目录的 `Makefile`。安装 GNU Make 与 Docker Compose v2 后，运行 `make help` 查看命令。
 
-日常工单联调用 `make dev` 启动本地 Java 和 Vite，打开 `http://127.0.0.1:5173/`，在启动终端按 `Ctrl+C` 一起关闭。工具与本地配置见[工单联调指南](docs/case-api.md)。
-
-使用 Docker Compose 查看整套服务时，运行 `make up` 启动，运行 `make stop` 停止并保留数据卷。
+运行 `make up` 启动整套服务，默认访问 `http://127.0.0.1:8080/`。运行 `make stop` 停止服务并保留数据卷。需要前端热更新时，参见[工单联调指南](docs/case-api.md)。
 
 首次启动前，在仓库根目录复制环境文件。Windows PowerShell 执行 `Copy-Item .env.example .env`，Linux 和 macOS 的 shell 执行 `cp .env.example .env`。已有 `.env` 时保留现有文件。然后运行：
 
@@ -53,7 +53,7 @@ docker compose ps
 
 完整命令、测试边界和 CI 排查见[测试指南](docs/testing.md)。
 
-准备各模块的工具和依赖后，运行 `make test` 执行模块测试和前端检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
+本地运行 `make test` 执行 Java 和 Python 模块测试。前端 lint 和构建可单独运行 `make test-frontend`，CI 也会通过 `make test` 执行这两项检查。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
 
 ```sh
 (cd apps/business-api && mvn test)
