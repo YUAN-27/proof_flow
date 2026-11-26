@@ -115,6 +115,93 @@ paths:
                   code:
                     type: string
                     enum: [VERSION_CONFLICT, INVALID_STATUS_TRANSITION]
+  /api/v1/cases/{caseId}/evidence:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    get:
+      operationId: listCaseEvidence
+      summary: List evidence metadata for a case
+      security:
+        - caseBearer: []
+      responses:
+        '200':
+          description: Evidence metadata in upload order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CaseEvidence'
+        '401':
+          $ref: '#/components/responses/CaseUnauthorized'
+        '404':
+          $ref: '#/components/responses/CaseNotFound'
+    post:
+      operationId: uploadCaseEvidence
+      summary: Upload one PDF, PNG or JPEG up to 10 MiB
+      security:
+        - caseBearer: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Evidence stored with its download path in the Location header
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseEvidence'
+        '400':
+          description: Missing file, empty file, or invalid filename or case identifier
+        '401':
+          $ref: '#/components/responses/CaseUnauthorized'
+        '404':
+          $ref: '#/components/responses/CaseNotFound'
+        '413':
+          description: File or multipart request exceeds the upload limit
+        '415':
+          description: Unsupported request media type or file signature
+        '503':
+          description: Local evidence storage is at capacity
+  /api/v1/cases/{caseId}/evidence/{evidenceId}:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - name: evidenceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: downloadCaseEvidence
+      summary: Download the original file as an attachment
+      security:
+        - caseBearer: []
+      responses:
+        '200':
+          description: Original evidence bytes
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/CaseUnauthorized'
+        '404':
+          description: The case or attachment does not exist in the authenticated tenant
 components:
   securitySchemes:
     caseBearer:
@@ -146,6 +233,31 @@ components:
     CaseNotFound:
       description: Case does not exist in the authenticated tenant
   schemas:
+    CaseEvidence:
+      type: object
+      required: [id, caseId, filename, contentType, sizeBytes, uploadedAt, uploadedBy]
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        contentType:
+          type: string
+          enum: [application/pdf, image/png, image/jpeg]
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 10485760
+        uploadedAt:
+          type: string
+          format: date-time
+        uploadedBy:
+          type: string
     CaseStatus:
       type: string
       enum: [OPEN, IN_REVIEW, CLOSED]

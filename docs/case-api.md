@@ -45,3 +45,13 @@ Invoke-RestMethod -Uri "$caseBase/$($createdCase.id)/status" -Method Patch -Head
 创建成功返回 `201` 和 `Location`，查询与更新成功返回 `200`。无效输入返回 `400`，跨租户和不存在的工单都返回 `404`。版本冲突或非法状态流转返回 `409`，响应的 `code` 分别为 `VERSION_CONFLICT` 或 `INVALID_STATUS_TRANSITION`。每次成功更新后使用响应中的新版本继续操作。
 
 工单和审计记录在进程重启后会清空。[OpenAPI 契约](../contracts/openapi/public.yaml)
+
+## 工单证据附件
+
+开发环境可以通过工单 API 上传、列出和下载附件，沿用工单的 bearer 凭据。租户由服务端确定，跨租户访问返回 `404`。
+
+- `POST /api/v1/cases/{caseId}/evidence` 接收 `multipart/form-data` 的 `file` 字段。支持 PDF、PNG、JPEG 的文件签名，单文件限 10 MiB。成功返回 `201` 和下载地址。
+- `GET /api/v1/cases/{caseId}/evidence` 返回附件元数据。
+- `GET /api/v1/cases/{caseId}/evidence/{evidenceId}` 以附件形式下载原始文件。
+
+内存模式最多保存 256 个附件及 64 MiB 文件内容，重启后会清空。持久化到 MySQL 和 MinIO 以及 Vue 附件页面将在后续批次接入。
