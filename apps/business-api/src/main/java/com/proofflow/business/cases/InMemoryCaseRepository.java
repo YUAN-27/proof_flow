@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-class InMemoryCaseStore implements CaseStore {
+class InMemoryCaseRepository implements CaseRepository {
     private final Map<CaseKey, CaseHistory> cases = new HashMap<>();
 
     @Override

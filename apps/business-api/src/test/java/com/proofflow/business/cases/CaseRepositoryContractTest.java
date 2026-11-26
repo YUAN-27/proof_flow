@@ -17,17 +17,17 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/** Extend this suite to exercise another CaseStore implementation. */
-abstract class CaseStoreContractTest {
+/** Extend this suite to exercise another CaseRepository implementation. */
+abstract class CaseRepositoryContractTest {
     private static final Instant NOW = Instant.parse("2026-11-24T03:00:00Z");
     private final UUID caseId = UUID.randomUUID();
-    private CaseStore store;
+    private CaseRepository store;
 
-    abstract CaseStore newStore();
+    abstract CaseRepository newRepository();
 
     @BeforeEach
-    void initializeStore() {
-        store = newStore();
+    void initializeRepository() {
+        store = newRepository();
     }
 
     @Test
