@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Storage for validated case snapshots and their audit events, partitioned by tenant and case ID. */
-public interface CaseStore {
+/** Persistence contract for case snapshots and audit events, partitioned by tenant and case ID. */
+public interface CaseRepository {
     /**
      * Inserts the snapshot and its creation audit atomically.
      * Returns false if the case already exists in that tenant.

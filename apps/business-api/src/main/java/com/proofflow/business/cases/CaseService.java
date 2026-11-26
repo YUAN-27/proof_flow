@@ -14,16 +14,16 @@ import java.util.UUID;
 /** Case lifecycle and audit history. Callers must establish actor identity. */
 @Service
 public class CaseService {
-    private final CaseStore store;
+    private final CaseRepository repository;
     private final Clock clock;
 
     @Autowired
-    public CaseService(CaseStore store) {
-        this(store, Clock.systemUTC());
+    public CaseService(CaseRepository repository) {
+        this(repository, Clock.systemUTC());
     }
 
-    CaseService(CaseStore store, Clock clock) {
-        this.store = Objects.requireNonNull(store);
+    CaseService(CaseRepository repository, Clock clock) {
+        this.repository = Objects.requireNonNull(repository);
         this.clock = Objects.requireNonNull(clock);
     }
 
@@ -38,12 +38,14 @@ public class CaseService {
         do {
             created = new CaseSnapshot(UUID.randomUUID(), actor.tenantId(), title, Status.OPEN, 1);
             entry = auditEntry(actor, created, Operation.CREATED, null);
-        } while (!store.insert(created, entry));
+        } while (!repository.insert(created, entry));
         return created;
     }
 
     public Optional<CaseSnapshot> find(ActorContext actor, UUID caseId) {
-        return store.find(Objects.requireNonNull(actor, "actor").tenantId(), Objects.requireNonNull(caseId, "caseId"));
+        return repository.find(
+            Objects.requireNonNull(actor, "actor").tenantId(), Objects.requireNonNull(caseId, "caseId")
+        );
     }
 
     public CaseSnapshot updateStatus(
@@ -56,7 +58,7 @@ public class CaseService {
             throw new IllegalArgumentException("expectedVersion must be positive");
         }
 
-        CaseSnapshot current = store.find(tenantId, caseId)
+        CaseSnapshot current = repository.find(tenantId, caseId)
             .orElseThrow(() -> new UpdateRejected(UpdateFailure.NOT_FOUND));
         if (current.version() != expectedVersion) {
             throw new UpdateRejected(UpdateFailure.VERSION_CONFLICT);
@@ -69,14 +71,14 @@ public class CaseService {
             current.id(), current.tenantId(), current.title(), nextStatus, current.version() + 1
         );
         AuditEntry entry = auditEntry(actor, updated, Operation.STATUS_UPDATED, current.status());
-        if (!store.updateIfVersionMatches(expectedVersion, updated, entry)) {
+        if (!repository.updateIfVersionMatches(expectedVersion, updated, entry)) {
             throw new UpdateRejected(UpdateFailure.VERSION_CONFLICT);
         }
         return updated;
     }
 
     public List<AuditEntry> auditTrail(ActorContext actor, UUID caseId) {
-        return store.auditTrail(
+        return repository.auditTrail(
             Objects.requireNonNull(actor, "actor").tenantId(), Objects.requireNonNull(caseId, "caseId")
         );
     }
