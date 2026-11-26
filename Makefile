@@ -25,6 +25,7 @@ help:
 	@echo make build           Build the Compose images
 	@echo make test            Run local Java and Python tests
 	@echo make up              Start the Compose stack at http://127.0.0.1:8080/ by default
+	@echo make dev             Start Java and Vite with frontend hot reload
 	@echo make help            List the main commands
 
 config:

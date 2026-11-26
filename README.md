@@ -8,18 +8,20 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 
 | 目录 | 用途 |
 | --- | --- |
-| `apps/frontend/` | Vue 3 + Vite 页面，通过同源代理检查 Java API |
-| `apps/business-api/` | Java 21 + Spring Boot，工单领域逻辑、HTTP API 和审计 |
-| `apps/agent-service/` | Python + FastAPI，提供容器网络内的 `GET /health`；依赖由 uv 管理 |
-| `contracts/` | 公开 HTTP API 的 OpenAPI、事件信封 Schema 与示例 |
-| `infra/minio/` | 从固定版本的社区版源码构建 MinIO |
-| `examples/casegym/` | 序列号争议的合成开发样例 |
-| `tests/integration/` | 验证 Compose 启动后的跨服务 HTTP 路径 |
-| `docs/` | 项目设计与技术文档 |
+| [`apps/frontend/`](apps/frontend) | Vue 3 + Vite 前端，从 [main.js](apps/frontend/src/main.js) 启动，工单页面和 API 调用在 [src/cases/](apps/frontend/src/cases) |
+| [`apps/business-api/`](apps/business-api) | Java 21 + Spring Boot，负责工单领域逻辑、HTTP API 和审计 |
+| [`apps/agent-service/`](apps/agent-service) | Python + FastAPI，从 [main.py](apps/agent-service/proofflow_agent/main.py) 进入，依赖由 uv 管理，测试在 [tests/](apps/agent-service/tests) |
+| [`contracts/`](contracts) | 公开 HTTP API 的 [OpenAPI](contracts/openapi/public.yaml)、事件信封 Schema 与示例 |
+| [`infra/minio/`](infra/minio) | 从固定版本的社区版源码构建 MinIO |
+| [`examples/casegym/`](examples/casegym) | 序列号争议的合成开发样例 |
+| [`tests/integration/`](tests/integration) | 验证 Compose 启动后的跨服务 HTTP 路径 |
+| [`docs/`](docs) | 项目设计与技术文档 |
 
 源码、依赖配置和单元测试与各自的服务放在一起。
 
 Java 的 Maven 模块位于 [`apps/business-api/`](apps/business-api)，源码放在 `src/main/java`。从 [`BusinessApplication`](apps/business-api/src/main/java/com/proofflow/business/BusinessApplication.java) 启动应用，工单状态流转和审计由 [`CaseService`](apps/business-api/src/main/java/com/proofflow/business/cases/CaseService.java) 管理，HTTP 接口由 [`CaseController`](apps/business-api/src/main/java/com/proofflow/business/cases/CaseController.java) 提供。Java 测试在 [`src/test/java`](apps/business-api/src/test/java)。
+
+如果本地有 `.worktrees/`，其中的目录是独立的 Git checkout，各自包含对应分支的源码。旧分支可能仍把 `business-api/` 放在根目录。用 `git worktree list` 查看 checkout 路径和分支，用 `git branch --show-current` 确认当前分支。
 
 ## 本地启动
 
