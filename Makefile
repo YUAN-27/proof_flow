@@ -23,7 +23,7 @@ all: build
 
 help:
 	@echo make build           Build the Compose images
-	@echo make test            Run local Java and Python tests
+	@echo make test            Run Java and Agent tests plus frontend lint and build
 	@echo make up              Start the Compose stack at http://127.0.0.1:8080/ by default
 	@echo make dev             Start Java and Vite with frontend hot reload
 	@echo make help            List the main commands
@@ -44,11 +44,7 @@ dev: export PROOFFLOW_MAKE_MVN = $(MVN)
 dev:
 	$(NODE) scripts/dev.mjs
 
-test: test-backend test-agent
-
-ifeq ($(CI),true)
-test: test-frontend
-endif
+test: test-backend test-agent test-frontend
 
 test-backend:
 	$(MVN) $(MVN_OPTS) -f apps/business-api/pom.xml test

@@ -55,7 +55,7 @@ docker compose ps
 
 完整命令、测试边界和 CI 排查见[测试指南](docs/testing.md)。
 
-本地运行 `make test` 执行 Java 和 Python 模块测试。前端 lint 和构建可单独运行 `make test-frontend`，CI 也会通过 `make test` 执行这两项检查。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
+本地和 CI 都通过 `make test` 运行 Java 和 Agent 测试，以及前端 lint 和构建。本地首次运行前先执行 `npm --prefix apps/frontend ci` 安装前端依赖。前端检查也可单独运行 `make test-frontend`。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
 
 ```sh
 (cd apps/business-api && mvn test)

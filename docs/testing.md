@@ -5,10 +5,11 @@
 ## 单元测试和模块检查
 
 ```text
+npm --prefix apps/frontend ci
 make test
 ```
 
-本地 `make test` 需要 GNU Make、JDK 21、Maven、Python 3.12 和 uv。Agent 的测试依赖由 uv 从 `uv.lock` 同步。
+本地 `make test` 运行 Java 和 Agent 测试，以及前端 lint 和构建。需要 GNU Make、JDK 21、Maven、Python 3.12、uv、Node.js 22.12 或更高版本，以及 npm。Agent 的测试依赖由 uv 从 `uv.lock` 同步。
 
 如果电脑上装了多个 JDK，可以在本地 `.env.make` 里用 `JAVA_HOME :=` 指定 JDK 21 的安装路径。路径有空格时也直接填写，文件由 Git 忽略。
 
@@ -20,7 +21,7 @@ make test
 
 ## 推送前检查
 
-新 clone 可执行 `git config --local core.hooksPath .githooks` 启用仓库提供的 Git hooks。推送前，hook 将每个待推送 ref 指向的 commit 解包到临时目录，并运行该快照的 `make test`。多个 ref 指向同一 commit 时只测试一次，删除 ref 时跳过测试。测试失败会终止推送。请在运行 Git 的终端中配置 Make、Maven、JDK 和 uv。hook 也会读取当前 checkout 的 `.env.make` 作为本机工具配置。
+新 clone 可执行 `git config --local core.hooksPath .githooks` 启用仓库提供的 Git hooks。推送前，hook 将每个待推送 ref 指向的 commit 解包到临时目录。包含前端 lockfile 的快照会先执行 `npm ci` 安装依赖，再运行该快照的 `make test`。多个 ref 指向同一 commit 时只测试一次，删除 ref 时跳过测试。依赖安装或测试失败会终止推送。请在运行 Git 的终端中配置上述本地测试工具。hook 也会读取当前 checkout 的 `.env.make` 作为本机工具配置。
 
 ## 跨服务集成测试
 
@@ -46,4 +47,4 @@ make test-integration
 
 ## GitHub Actions
 
-面向 `main` 的 PR 和推送到 `main` 都会触发 CI。Linux 与 macOS 使用 `npm ci` 安装前端依赖，在 `CI=true` 下执行 `make test`。Linux 还会生成一次性工单凭据，启动 Compose，然后执行 `make test-integration` 和 `make test-case-integration`。启动或测试失败时，在 Actions job 中查看 Compose 日志。job 结束时清理 runner 上的临时容器和数据卷。
+面向 `main` 的 PR 和推送到 `main` 都会触发 CI。Linux 与 macOS 使用 `npm ci` 安装前端依赖，然后执行 `make test`。Linux 还会生成一次性工单凭据，启动 Compose，然后执行 `make test-integration` 和 `make test-case-integration`。启动或测试失败时，在 Actions job 中查看 Compose 日志。job 结束时清理 runner 上的临时容器和数据卷。
