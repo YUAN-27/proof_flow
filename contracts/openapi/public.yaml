@@ -38,6 +38,7 @@ paths:
                 title:
                   type: string
                   minLength: 1
+                  pattern: '.*\S.*'
                   description: Nonblank case title
       responses:
         '201':
