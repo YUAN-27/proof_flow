@@ -32,12 +32,12 @@ java "-Dloader.path=$mysqlConnectorJar" -cp apps/business-api/target/business-ap
 - 用两个连接同时更新同一个版本，确认只提交一个新快照和一条新审计。
 - 重启使用同一数据卷的 MySQL，确认快照和审计仍可查询。
 - `MySqlCaseRepositoryTest` 复用 `CaseRepositoryContractTest`，另验证 MySQL 拒绝审计后回滚创建和更新，以及 Unicode 和微秒时间往返。
-- 通过 HTTP 创建工单并更新状态，重启 Java 后读取同一工单，再查询 MySQL 中对应的两条审计记录。
+- `MySqlCaseHttpIntegrationTest` 通过 HTTP 创建工单并更新状态，关闭并重新启动 Spring Boot 后读取同一工单及两条按版本排序的审计记录。
 
 在一次性测试数据库执行 V001 后，设置 `PROOF_FLOW_TEST_MYSQL_URL`、`PROOF_FLOW_TEST_MYSQL_USER` 和 `PROOF_FLOW_TEST_MYSQL_PASSWORD`，并把 MySQL Connector/J JAR 的绝对路径赋给 PowerShell 变量 `$mysqlConnectorJar`。从仓库根目录运行：
 
 ```powershell
-mvn -f apps/business-api/pom.xml "-Dmaven.test.additionalClasspath=$mysqlConnectorJar" "-Dtest=MySqlCaseRepositoryTest" test
+mvn -f apps/business-api/pom.xml "-Dmaven.test.additionalClasspath=$mysqlConnectorJar" "-Dtest=MySqlCaseRepositoryTest,MySqlCaseHttpIntegrationTest" test
 ```
 
-测试会写入工单和审计数据，并在测试库中保留这些数据。未设置 JDBC URL 时，常规 Maven 测试跳过该 MySQL 测试类。
+测试会写入工单和审计数据，并在测试库中保留这些数据。未设置 JDBC URL 时，常规 Maven 测试跳过这两组 MySQL 测试。
