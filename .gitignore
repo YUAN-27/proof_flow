@@ -20,6 +20,7 @@ htmlcov/
 Thumbs.db
 
 # Local data / logs
+.worktrees/
 *.sqlite
 *.db
 *.log

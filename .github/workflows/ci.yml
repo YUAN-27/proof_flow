@@ -42,14 +42,17 @@ jobs:
         with:
           node-version: '24'
       - name: Install frontend dependencies
-        run: npm --prefix apps/frontend install --no-audit --no-fund
+        run: npm --prefix apps/frontend ci --no-audit --no-fund
       - name: Run module tests and frontend checks
         run: make test
 
       - name: Validate Compose configuration
         id: compose
         if: runner.os == 'Linux'
-        run: cp .env.example .env && make config
+        run: |
+          cp .env.example .env
+          node -e 'const token = require("node:crypto").randomBytes(32).toString("hex"); require("node:fs").appendFileSync(".env", `\nPROOFFLOW_CASES_TOKEN=${token}\nPROOFFLOW_CASES_TENANT_ID=ci-tenant\nPROOFFLOW_CASES_ACTOR_ID=ci-operator\n`);'
+          make config
 
       - name: Build and start the stack
         if: runner.os == 'Linux'
@@ -58,7 +61,8 @@ jobs:
 
       - name: Run Compose smoke tests
         if: runner.os == 'Linux'
-        run: make test-integration
+        run: |
+          node --env-file=.env -e 'const result = require("node:child_process").spawnSync("make", ["test-integration", "test-case-integration"], { stdio: "inherit" }); process.exitCode = result.status ?? 1;'
 
       - name: Print Compose logs on failure
         if: failure() && steps.compose.outcome == 'success'

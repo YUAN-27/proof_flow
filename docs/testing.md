@@ -5,16 +5,23 @@
 ## 单元测试和模块检查
 
 ```text
+npm --prefix apps/frontend ci
 make test
 ```
 
-运行前需准备 GNU Make、JDK 21 和 Maven、Python 3.12 和 uv，以及 Node.js 22.12 或更高版本。首次运行前端检查时，先执行 `npm --prefix apps/frontend install`。Agent 的测试依赖由 uv 从 `uv.lock` 同步。
+本地 `make test` 运行 Java 和 Agent 测试，以及前端 lint 和构建。需要 GNU Make、JDK 21、Maven、Python 3.12、uv、Node.js 22.12 或更高版本，以及 npm。Agent 的测试依赖由 uv 从 `uv.lock` 同步。
+
+如果电脑上装了多个 JDK，可以在本地 `.env.make` 里用 `JAVA_HOME :=` 指定 JDK 21 的安装路径。路径有空格时也直接填写，文件由 Git 忽略。
 
 - `make test-backend` 使用 Maven 运行 Java 测试。现有健康接口测试加载 Spring 应用上下文并使用 MockMvc，属于模块内 HTTP 测试。
 - `make test-agent` 使用 pytest 和 FastAPI TestClient 验证 Agent 的 `/health`。请求在 Python 进程内完成。
-- `make test-frontend` 运行 ESLint 和 Vite 构建。目前没有前端单元测试。
+- `make test-frontend` 运行 ESLint 和 Vite 构建。目前没有前端单元测试。运行前需准备 Node.js 22.12 或更高版本，并执行 `npm --prefix apps/frontend ci` 安装锁定的依赖。
 
 这些检查不需要启动 Compose。Java 和 Agent 的健康接口测试也不访问其他服务。
+
+## 推送前检查
+
+新 clone 可执行 `git config --local core.hooksPath .githooks` 启用仓库提供的 Git hooks。推送前，hook 将每个待推送 ref 指向的 commit 解包到临时目录。包含前端 lockfile 的快照会先执行 `npm ci` 安装依赖，再运行该快照的 `make test`。多个 ref 指向同一 commit 时只测试一次，删除 ref 时跳过测试。依赖安装或测试失败会终止推送。请在运行 Git 的终端中配置上述本地测试工具。hook 也会读取当前 checkout 的 `.env.make` 作为本机工具配置。
 
 ## 跨服务集成测试
 
@@ -34,8 +41,10 @@ $env:PROOFFLOW_SMOKE_URL = 'http://127.0.0.1:8081'
 make test-integration
 ```
 
-这组 smoke test 覆盖前端到 Java 的请求链路。Agent、MySQL 和 MinIO 的就绪状态由 Compose 健康检查确认。目前没有跨服务业务、数据库写入或对象存储读写测试。
+这组只读 smoke test 覆盖前端到 Java 的请求链路。Agent、MySQL 和 MinIO 的就绪状态由 Compose 健康检查确认。目前没有 Agent 业务调用、数据库写入或对象存储读写测试。
+
+工单 API 的写入回归单独使用 `make test-case-integration`，只在可丢弃的联调环境运行。它使用该环境的 `PROOFFLOW_CASES_TOKEN`，经前端代理验证无凭据拒绝、创建、读取、状态流转和版本冲突，并会创建一张合成工单。
 
 ## GitHub Actions
 
-面向 `main` 的 PR 和推送到 `main` 都会触发 CI。Linux 与 macOS 都执行 `make test`。Linux 还会执行 `make config`、`make up` 和 `make test-integration`。启动或测试失败时，在 Actions job 中查看 Compose 日志。job 结束时清理 runner 上的临时容器和数据卷。
+面向 `main` 的 PR 和推送到 `main` 都会触发 CI。Linux 与 macOS 使用 `npm ci` 安装前端依赖，然后执行 `make test`。Linux 还会生成一次性工单凭据，启动 Compose，然后执行 `make test-integration` 和 `make test-case-integration`。启动或测试失败时，在 Actions job 中查看 Compose 日志。job 结束时清理 runner 上的临时容器和数据卷。

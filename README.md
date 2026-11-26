@@ -8,20 +8,26 @@ ProofFlow 帮助客服整理售后争议的证据和缺口，生成带版本引�
 
 | 目录 | 用途 |
 | --- | --- |
-| `apps/frontend/` | Vue 3 + Vite 页面，通过同源代理检查 Java API |
-| `apps/business-api/` | Java 21 + Spring Boot，提供 `GET /api/v1/health` |
-| `apps/agent-service/` | Python + FastAPI，提供容器网络内的 `GET /health`；依赖由 uv 管理 |
-| `contracts/` | 公开健康检查的 OpenAPI、事件信封 Schema 与示例 |
-| `infra/minio/` | 从固定版本的社区版源码构建 MinIO |
-| `examples/casegym/` | 序列号争议的合成开发样例 |
-| `tests/integration/` | 验证 Compose 启动后的跨服务 HTTP 路径 |
-| `docs/` | 项目设计与技术文档 |
+| [`apps/frontend/`](apps/frontend) | Vue 3 + Vite 前端，从 [main.js](apps/frontend/src/main.js) 启动，工单页面和 API 调用在 [src/cases/](apps/frontend/src/cases) |
+| [`apps/business-api/`](apps/business-api) | Java 21 + Spring Boot，负责工单领域逻辑、HTTP API 和审计 |
+| [`apps/agent-service/`](apps/agent-service) | Python + FastAPI，从 [main.py](apps/agent-service/proofflow_agent/main.py) 进入，依赖由 uv 管理，测试在 [tests/](apps/agent-service/tests) |
+| [`contracts/`](contracts) | 公开 HTTP API 的 [OpenAPI](contracts/openapi/public.yaml)、事件信封 Schema 与示例 |
+| [`infra/minio/`](infra/minio) | 从固定版本的社区版源码构建 MinIO |
+| [`examples/casegym/`](examples/casegym) | 序列号争议的合成开发样例 |
+| [`tests/integration/`](tests/integration) | 验证 Compose 启动后的跨服务 HTTP 路径 |
+| [`docs/`](docs) | 项目设计与技术文档 |
 
 源码、依赖配置和单元测试与各自的服务放在一起。
+
+Java 的 Maven 模块位于 [`apps/business-api/`](apps/business-api)，源码放在 `src/main/java`。从 [`BusinessApplication`](apps/business-api/src/main/java/com/proofflow/business/BusinessApplication.java) 启动应用，工单状态流转和审计由 [`CaseService`](apps/business-api/src/main/java/com/proofflow/business/cases/CaseService.java) 管理，HTTP 接口由 [`CaseController`](apps/business-api/src/main/java/com/proofflow/business/cases/CaseController.java) 提供。Java 测试在 [`src/test/java`](apps/business-api/src/test/java)。
+
+如果本地有 `.worktrees/`，其中的目录是独立的 Git checkout，各自包含对应分支的源码。旧分支可能仍把 `business-api/` 放在根目录。用 `git worktree list` 查看 checkout 路径和分支，用 `git branch --show-current` 确认当前分支。
 
 ## 本地启动
 
 Windows、Linux 和 macOS 共用仓库根目录的 `Makefile`。安装 GNU Make 与 Docker Compose v2 后，运行 `make help` 查看命令。
+
+运行 `make up` 启动整套服务，默认访问 `http://127.0.0.1:8080/`。运行 `make stop` 停止服务并保留数据卷。需要前端热更新时，参见[工单联调指南](docs/case-api.md)。
 
 首次启动前，在仓库根目录复制环境文件。Windows PowerShell 执行 `Copy-Item .env.example .env`，Linux 和 macOS 的 shell 执行 `cp .env.example .env`。已有 `.env` 时保留现有文件。然后运行：
 
@@ -49,11 +55,11 @@ docker compose ps
 
 完整命令、测试边界和 CI 排查见[测试指南](docs/testing.md)。
 
-准备各模块的工具和依赖后，运行 `make test` 执行模块测试和前端检查。也可以单独运行 `make test-backend`、`make test-frontend` 或 `make test-agent`。前端目标执行 lint 和构建。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
+本地和 CI 都通过 `make test` 运行 Java 和 Agent 测试，以及前端 lint 和构建。本地首次运行前先执行 `npm --prefix apps/frontend ci` 安装前端依赖。前端检查也可单独运行 `make test-frontend`。Agent 测试需要 Python 3.12 和 uv，uv 会创建虚拟环境并按 `uv.lock` 同步测试依赖。
 
 ```sh
 (cd apps/business-api && mvn test)
-(cd apps/frontend && npm install && npm run lint && npm run build)
+(cd apps/frontend && npm ci && npm run lint && npm run build)
 (cd apps/agent-service && uv run --locked pytest)
 ```
 
@@ -63,7 +69,7 @@ Java 需要 JDK 21 和 Maven，前端需要 Node.js 22.12 或更新版本，Agen
 
 ## GitHub Actions
 
-向 `main` 提交 PR 或推送时，GitHub Actions 在 Linux 和 macOS 上运行 `make test`。Linux 还运行 `make config`、`make up` 和 `make test-integration`。启动或测试失败时，容器日志会记录到 Actions；测试结束后，runner 清理临时容器和数据卷。
+向 `main` 提交 PR 或推送时，GitHub Actions 在 Linux 和 macOS 上运行 `make test`。Linux 还会启动 Compose，并运行 `make test-integration` 和 `make test-case-integration`。启动或测试失败时，容器日志会记录到 Actions；测试结束后，runner 清理临时容器和数据卷。
 
 本地也可以在 `make up` 成功后运行 `make test-integration`。它向前端发送真实 HTTP 请求，验证首页和转发给 Java 后端的健康接口。默认地址为 `http://127.0.0.1:8080`，自定义端口时可用环境变量 `PROOFFLOW_SMOKE_URL` 指定完整地址。
 

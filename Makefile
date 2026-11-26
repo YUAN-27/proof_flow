@@ -1,23 +1,32 @@
+-include .env.make
+
+ifneq ($(strip $(JAVA_HOME)),)
+export JAVA_HOME
+endif
+
 DOCKER ?= docker
+ifneq ($(filter Windows32 Windows_NT %mingw32 %mingw64,$(MAKE_HOST) $(OS)),)
+MVN ?= mvn.cmd
+NPM ?= npm.cmd
+else
 MVN ?= mvn
 NPM ?= npm
+endif
+NODE ?= node
 UV ?= uv
 PYTHON ?= python
 MVN_OPTS ?= -Dmaven.wagon.http.retryHandler.count=5
 
-.PHONY: all help config build up test test-backend test-frontend test-agent test-integration
+.PHONY: all help config build up stop dev test test-backend test-frontend test-agent test-integration test-case-integration
 
 all: build
 
 help:
-	@echo make test            Run module tests and frontend checks
-	@echo make config          Validate the Compose configuration
 	@echo make build           Build the Compose images
-	@echo make up              Build and start the Compose services
-	@echo make test-backend    Run business API tests
-	@echo make test-frontend   Lint and build the frontend
-	@echo make test-agent      Run agent service tests
-	@echo make test-integration  Smoke test the running Compose stack
+	@echo make test            Run Java and Agent tests plus frontend lint and build
+	@echo make up              Start the Compose stack at http://127.0.0.1:8080/ by default
+	@echo make dev             Start Java and Vite with frontend hot reload
+	@echo make help            List the main commands
 
 config:
 	$(DOCKER) compose config --quiet
@@ -28,7 +37,14 @@ build:
 up:
 	$(DOCKER) compose up --build --wait
 
-test: test-backend test-frontend test-agent
+stop:
+	$(DOCKER) compose stop
+
+dev: export PROOFFLOW_MAKE_MVN = $(MVN)
+dev:
+	$(NODE) scripts/dev.mjs
+
+test: test-backend test-agent test-frontend
 
 test-backend:
 	$(MVN) $(MVN_OPTS) -f apps/business-api/pom.xml test
@@ -42,3 +58,6 @@ test-agent:
 
 test-integration:
 	$(PYTHON) tests/integration/compose_smoke.py
+
+test-case-integration:
+	$(PYTHON) tests/integration/case_smoke.py
