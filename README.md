@@ -59,7 +59,7 @@ docker compose ps
 
 ```sh
 (cd apps/business-api && mvn test)
-(cd apps/frontend && npm install && npm run lint && npm run build)
+(cd apps/frontend && npm ci && npm run lint && npm run build)
 (cd apps/agent-service && uv run --locked pytest)
 ```
 
@@ -69,7 +69,7 @@ Java 需要 JDK 21 和 Maven，前端需要 Node.js 22.12 或更新版本，Agen
 
 ## GitHub Actions
 
-向 `main` 提交 PR 或推送时，GitHub Actions 在 Linux 和 macOS 上运行 `make test`。Linux 还运行 `make config`、`make up` 和 `make test-integration`。启动或测试失败时，容器日志会记录到 Actions；测试结束后，runner 清理临时容器和数据卷。
+向 `main` 提交 PR 或推送时，GitHub Actions 在 Linux 和 macOS 上运行 `make test`。Linux 还会启动 Compose，并运行 `make test-integration` 和 `make test-case-integration`。启动或测试失败时，容器日志会记录到 Actions；测试结束后，runner 清理临时容器和数据卷。
 
 本地也可以在 `make up` 成功后运行 `make test-integration`。它向前端发送真实 HTTP 请求，验证首页和转发给 Java 后端的健康接口。默认地址为 `http://127.0.0.1:8080`，自定义端口时可用环境变量 `PROOFFLOW_SMOKE_URL` 指定完整地址。
 

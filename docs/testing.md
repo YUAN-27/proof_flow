@@ -14,7 +14,7 @@ make test
 
 - `make test-backend` 使用 Maven 运行 Java 测试。现有健康接口测试加载 Spring 应用上下文并使用 MockMvc，属于模块内 HTTP 测试。
 - `make test-agent` 使用 pytest 和 FastAPI TestClient 验证 Agent 的 `/health`。请求在 Python 进程内完成。
-- `make test-frontend` 运行 ESLint 和 Vite 构建。目前没有前端单元测试。运行前需准备 Node.js 22.12 或更高版本，并执行 `npm --prefix apps/frontend install`。
+- `make test-frontend` 运行 ESLint 和 Vite 构建。目前没有前端单元测试。运行前需准备 Node.js 22.12 或更高版本，并执行 `npm --prefix apps/frontend ci` 安装锁定的依赖。
 
 这些检查不需要启动 Compose。Java 和 Agent 的健康接口测试也不访问其他服务。
 
@@ -46,4 +46,4 @@ make test-integration
 
 ## GitHub Actions
 
-面向 `main` 的 PR 和推送到 `main` 都会触发 CI。Linux 与 macOS 在 `CI=true` 下执行 `make test`，同时运行 Java、Python 测试和前端检查。Linux 还会执行 `make config`、`make up` 和 `make test-integration`。启动或测试失败时，在 Actions job 中查看 Compose 日志。job 结束时清理 runner 上的临时容器和数据卷。
+面向 `main` 的 PR 和推送到 `main` 都会触发 CI。Linux 与 macOS 使用 `npm ci` 安装前端依赖，在 `CI=true` 下执行 `make test`。Linux 还会生成一次性工单凭据，启动 Compose，然后执行 `make test-integration` 和 `make test-case-integration`。启动或测试失败时，在 Actions job 中查看 Compose 日志。job 结束时清理 runner 上的临时容器和数据卷。

@@ -7,7 +7,7 @@
 准备 GNU Make、JDK 21、Maven 和 Node.js（22.12 或更高版本）。首次运行前在仓库根目录安装前端依赖，然后启动联调：
 
 ```powershell
-npm --prefix apps/frontend install
+npm --prefix apps/frontend ci
 make dev
 ```
 

@@ -126,7 +126,7 @@ function signalService(service, signal) {
 try {
   const config = readConfig()
   const vite = join(frontend, 'node_modules/vite/bin/vite.js')
-  if (!existsSync(vite)) throw new Error('Install the frontend dependencies with npm --prefix apps/frontend install.')
+  if (!existsSync(vite)) throw new Error('Install the frontend dependencies with npm --prefix apps/frontend ci.')
   if (!/^[A-Za-z0-9._~+/-]{32,}={0,2}$/.test(config.PROOFFLOW_CASES_TOKEN || '')) {
     throw new Error('Set a valid local PROOFFLOW_CASES_TOKEN in .env.dev.')
   }
