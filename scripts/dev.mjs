@@ -140,10 +140,10 @@ try {
   delete toolsEnv.PROOFFLOW_CASES_TENANT_ID
   delete toolsEnv.PROOFFLOW_CASES_ACTOR_ID
   if (config.JAVA_HOME) toolsEnv.JAVA_HOME = config.JAVA_HOME
-  const maven = buildJava(config.MVN || 'mvn', toolsEnv)
+  const maven = buildJava(config.MVN || process.env.PROOFFLOW_MAKE_MVN || 'mvn', toolsEnv)
   const built = await Promise.race([maven.done, interrupted])
   if (!built || stopping.signal.aborted) throw new Error('Development startup interrupted.')
-  if (built.result !== '0') throw new Error(`Maven failed (${built.result}). Check JDK 21 and MVN in .env.dev.`)
+  if (built.result !== '0') throw new Error(`Maven failed (${built.result}). Check JDK 21 and your MVN configuration.`)
 
   const java = config.JAVA_HOME
     ? join(config.JAVA_HOME, 'bin', windows ? 'java.exe' : 'java')

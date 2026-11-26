@@ -20,7 +20,7 @@ make test
 
 ## 推送前检查
 
-新 clone 可执行 `git config --local core.hooksPath .githooks` 启用仓库提供的 Git hooks。Git 会在 `git push` 前运行 `make test`。测试失败时，推送终止。请在运行 Git 的终端中配置 Make、Maven、JDK 和 uv。
+新 clone 可执行 `git config --local core.hooksPath .githooks` 启用仓库提供的 Git hooks。推送前，hook 将每个待推送 ref 指向的 commit 解包到临时目录，并运行该快照的 `make test`。多个 ref 指向同一 commit 时只测试一次，删除 ref 时跳过测试。测试失败会终止推送。请在运行 Git 的终端中配置 Make、Maven、JDK 和 uv。hook 也会读取当前 checkout 的 `.env.make` 作为本机工具配置。
 
 ## 跨服务集成测试
 

@@ -39,6 +39,7 @@ up:
 stop:
 	$(DOCKER) compose stop
 
+dev: export PROOFFLOW_MAKE_MVN = $(MVN)
 dev:
 	$(NODE) scripts/dev.mjs
 

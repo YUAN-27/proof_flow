@@ -15,6 +15,8 @@ make dev
 
 首次启动会生成 Git 忽略的 `.env.dev`，工作台填写其中的 `PROOFFLOW_CASES_TOKEN`。脚本只把凭据传给 Java。可以在该文件里一次性设置 `JAVA_HOME`、`MVN` 的路径，以及 `PROOFFLOW_DEV_JAVA_PORT`、`PROOFFLOW_DEV_WEB_PORT`。默认使用 Java 的 `8082` 和 Vite 的 `5173`。端口被占用时请改这个文件，或者先停止占用端口的服务。直接使用 Vite 命令且不设置代理目标时，它仍代理到 `8080`。
 
+通过 `make dev` 启动时，Maven 路径依次取 shell 环境中的 `MVN`、`.env.dev` 的 `MVN` 和 Make 的 `MVN`（例如在 `.env.make` 中配置）。
+
 ## Docker Compose 联调
 
 首次运行前在工作树根目录复制 `.env.example` 为 `.env`，已有文件时保留它。在 `.env` 中一次性配置 `PROOFFLOW_WEB_PORT=8081`、`PROOFFLOW_CASES_TENANT_ID`、`PROOFFLOW_CASES_ACTOR_ID` 和 `PROOFFLOW_CASES_TOKEN`。联调身份和 token 可以沿用 `.env.dev` 中生成的值。之后 Compose 会自动读取 `.env`：
