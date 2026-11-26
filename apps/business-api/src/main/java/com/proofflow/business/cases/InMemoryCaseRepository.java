@@ -2,6 +2,7 @@ package com.proofflow.business.cases;
 
 import com.proofflow.business.cases.CaseService.AuditEntry;
 import com.proofflow.business.cases.CaseService.CaseSnapshot;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
+@ConditionalOnProperty(name = "proofflow.cases.repository", havingValue = "memory", matchIfMissing = true)
 class InMemoryCaseRepository implements CaseRepository {
     private final Map<CaseKey, CaseHistory> cases = new HashMap<>();
 
