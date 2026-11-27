@@ -44,6 +44,16 @@ export function readCase(token, id) {
   return request(`/${encodeURIComponent(id)}`, token)
 }
 
+export function listCases(credential, { status, query, offset, signal }) {
+  const params = new URLSearchParams({ q: query, offset })
+  if (status) params.set('status', status)
+  return request(`?${params}`, credential, { signal })
+}
+
+export function readCaseAudit(credential, id, signal) {
+  return request(`/${encodeURIComponent(id)}/audit`, credential, { signal })
+}
+
 export function updateCaseStatus(token, id, expectedVersion, status) {
   return request(`/${encodeURIComponent(id)}/status`, token, {
     method: 'PATCH', body: { expectedVersion, status },

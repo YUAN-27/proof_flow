@@ -1,6 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue'
 import CaseEvidencePanel from './CaseEvidencePanel.vue'
+import CaseAuditTimeline from './CaseAuditTimeline.vue'
+import CaseQueue from './CaseQueue.vue'
 import { createCase, readCase, updateCaseStatus } from './caseApi.js'
 
 const props = defineProps({ staffCredential: { type: Object, default: null } })
@@ -13,7 +15,7 @@ const states = {
 
 const token = ref('')
 const title = ref('')
-const lookupId = ref('')
+const queueRevision = ref(0)
 const selected = ref(null)
 const pending = ref(false)
 const notice = ref(null)
@@ -30,7 +32,6 @@ function resetSelection() {
 
 function displayCase(record) {
   selected.value = record
-  lookupId.value = record.id
   requiresRefresh.value = false
 }
 
@@ -66,6 +67,7 @@ function submitNewCase() {
   if (!title.value.trim()) return
   return run(async (credential) => {
     displayCase(await createCase(credential, title.value.trim()))
+    queueRevision.value++
     title.value = ''
     notice.value = { text: '工单已创建。' }
   })
@@ -86,6 +88,7 @@ function advanceCase() {
   const next = state.value.next
   return run(async (credential) => {
     displayCase(await updateCaseStatus(credential, id, version, next))
+    queueRevision.value++
     notice.value = { text: '状态已更新。' }
   })
 }
@@ -99,13 +102,13 @@ function advanceCase() {
         <label for="case-token">本地联调凭据</label>
         <input
           id="case-token"
-          v-model="token"
+          v-model.lazy="token"
           type="password"
           autocomplete="off"
           spellcheck="false"
           aria-describedby="case-token-help"
           :disabled="pending"
-          @input="resetSelection"
+          @change="resetSelection"
         >
         <p id="case-token-help" class="muted">输入服务端配置的 Bearer token。</p>
       </div>
@@ -117,17 +120,14 @@ function advanceCase() {
 
     <div class="workspace-grid">
       <div class="actions">
+        <CaseQueue v-if="credential" class="panel" :key="staffCredential ? 'staff' : credential"
+          :credential="credential" :states="states" :selected-id="selected?.id" :revision="queueRevision"
+          :disabled="pending" @select="loadCase" />
         <form class="panel" @submit.prevent="submitNewCase">
           <h3>创建工单</h3>
           <label for="new-case-title">工单标题</label>
           <input id="new-case-title" v-model="title" type="text" required :disabled="pending">
           <button class="primary" type="submit" :disabled="!ready || !title.trim()">创建工单</button>
-        </form>
-        <form class="panel" @submit.prevent="loadCase(lookupId)">
-          <h3>查询工单</h3>
-          <label for="lookup-case-id">工单 ID</label>
-          <input id="lookup-case-id" v-model="lookupId" type="text" required spellcheck="false" :disabled="pending">
-          <button type="submit" :disabled="!ready || !lookupId.trim()">查询工单</button>
         </form>
       </div>
 
@@ -151,9 +151,10 @@ function advanceCase() {
             </button>
             <button type="button" :disabled="!ready" @click="loadCase(selected.id)">刷新工单</button>
           </div>
+          <CaseAuditTimeline :case-id="selected.id" :credential="credential" :states="states" :version="selected.version" />
           <CaseEvidencePanel :key="selected.id" :case-id="selected.id" :credential="credential" />
         </template>
-        <p v-else class="muted">创建一张工单，或输入已有工单 ID 查看详情。</p>
+        <p v-else class="muted">从队列选择一张工单，或创建新工单。</p>
       </section>
     </div>
   </section>
@@ -176,7 +177,7 @@ h4 { margin-top: 1.25rem; font-size: 1.35rem; overflow-wrap: anywhere; }
 .credential { width: min(100%, 20rem); }
 .credential p { margin-top: 0.35rem; }
 
-.workspace-grid { display: grid; grid-template-columns: 1fr 1.45fr; gap: 1rem; }
+.workspace-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); gap: 1rem; }
 .actions { display: grid; gap: 1rem; align-content: start; }
 .panel { min-width: 0; padding: 1.25rem; border: 1px solid #dbe3ed; border-radius: 0.75rem; background: #fff; }
 .panel > .muted { margin-top: 1rem; }

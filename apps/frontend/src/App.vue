@@ -35,12 +35,15 @@ onMounted(checkHealth)
   <main>
     <header class="app-header">
       <h1>ProofFlow Investigator</h1>
+    </header>
+    <StaffWorkspace />
+    <details class="diagnostics">
+      <summary>连接诊断</summary>
       <div class="health">
         <p role="status">{{ status }}</p>
         <button type="button" :disabled="pending" @click="checkHealth">重新检查</button>
       </div>
-    </header>
-    <StaffWorkspace />
+    </details>
   </main>
 </template>
 
@@ -71,6 +74,7 @@ main {
 h1 { margin: 0; font-size: 1.25rem; }
 .health { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
 .health p { margin: 0; color: #46566b; font-size: 0.875rem; }
+.diagnostics { margin-top: 1.5rem; color: #46566b; font-size: .875rem; }
 
 button {
   padding: 0.5rem 0.875rem;
