@@ -71,3 +71,8 @@ jobs:
       - name: Clean up the CI stack
         if: always() && steps.compose.outcome == 'success'
         run: docker compose down --volumes
+
+      - name: Verify attachment persistence after restart
+        if: runner.os == 'Linux'
+        timeout-minutes: 10
+        run: make test-evidence-integration

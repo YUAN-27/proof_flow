@@ -1,6 +1,6 @@
 # Java 工单 HTTP API
 
-工单 API 复用内存工单服务。联调时只启用一个由服务器配置的租户与操作者，不包含登录功能。未配置 token 时，工单请求返回 `401`，公开的 `GET /api/v1/health` 仍可访问。
+工单 API 支持内存模式和 MySQL 模式。联调时只启用一个由服务器配置的租户与操作者。未配置 token 时，工单请求返回 `401`，公开的 `GET /api/v1/health` 仍可访问。
 
 ## Vite 热更新联调
 
@@ -54,4 +54,4 @@ Invoke-RestMethod -Uri "$caseBase/$($createdCase.id)/status" -Method Patch -Head
 - `GET /api/v1/cases/{caseId}/evidence` 返回附件元数据。
 - `GET /api/v1/cases/{caseId}/evidence/{evidenceId}` 以附件形式下载原始文件。
 
-内存模式最多保存 256 个附件及 64 MiB 文件内容，重启后会清空。持久化到 MySQL 和 MinIO 以及 Vue 附件页面将在后续批次接入。
+内存模式最多保存 256 个附件及 64 MiB 文件内容，重启后会清空。持久化模式把附件元数据写入 MySQL，把文件写入 MinIO。用[持久化指南](superpowers/specs/2026-11-26-evidence-mysql-schema.md#使用-compose-启用持久化)启用该模式。

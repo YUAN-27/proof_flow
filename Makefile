@@ -17,7 +17,7 @@ UV ?= uv
 PYTHON ?= python
 MVN_OPTS ?= -Dmaven.wagon.http.retryHandler.count=5
 
-.PHONY: all help config build up stop dev test test-backend test-frontend test-agent test-integration test-case-integration
+.PHONY: all help config build up stop dev test test-backend test-frontend test-agent test-integration test-case-integration test-evidence-integration
 
 all: build
 
@@ -61,3 +61,6 @@ test-integration:
 
 test-case-integration:
 	$(PYTHON) tests/integration/case_smoke.py
+
+test-evidence-integration:
+	$(NODE) tests/integration/evidence_persistence.mjs
