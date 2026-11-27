@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -13,24 +14,27 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
-/** Opt-in identity for local HTTP integration until a user authentication mechanism is available. */
+/** Resolves the server-side actor for the configured authentication mode. */
 @Configuration(proxyBeanMethods = false)
 class CaseHttpAuthentication implements WebMvcConfigurer, HandlerInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final byte[] token;
     private final ActorContext actor;
+    private final boolean staffEnabled;
 
     CaseHttpAuthentication(
         @Value("${PROOFFLOW_CASES_TOKEN:}") String token,
         @Value("${PROOFFLOW_CASES_TENANT_ID:}") String tenantId,
-        @Value("${PROOFFLOW_CASES_ACTOR_ID:}") String actorId
+        @Value("${PROOFFLOW_CASES_ACTOR_ID:}") String actorId,
+        @Value("${proofflow.staff.enabled:false}") boolean staffEnabled
     ) {
-        if (!token.isEmpty() && !token.matches("[A-Za-z0-9._~+/-]{32,}={0,2}")) {
+        this.staffEnabled = staffEnabled;
+        if (!staffEnabled && !token.isEmpty() && !token.matches("[A-Za-z0-9._~+/-]{32,}={0,2}")) {
             throw new IllegalArgumentException("PROOFFLOW_CASES_TOKEN must contain at least 32 bearer-safe characters");
         }
         this.token = token.getBytes(StandardCharsets.UTF_8);
-        this.actor = token.isEmpty() ? null : new ActorContext(tenantId, actorId);
+        this.actor = staffEnabled || token.isEmpty() ? null : new ActorContext(tenantId, actorId);
     }
 
     @Override
@@ -40,6 +44,14 @@ class CaseHttpAuthentication implements WebMvcConfigurer, HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (staffEnabled) {
+            if (request.getUserPrincipal() instanceof Authentication auth && auth.getPrincipal() instanceof StaffAccount staff) {
+                request.setAttribute(ActorContext.REQUEST_ATTRIBUTE, staff.actor());
+                return true;
+            }
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+        }
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (actor == null || !matchesBearerToken(authorization)) {
             response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer");

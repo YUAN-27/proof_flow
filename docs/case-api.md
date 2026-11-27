@@ -2,6 +2,17 @@
 
 工单 API 支持内存模式和 MySQL 模式。联调时只启用一个由服务器配置的租户与操作者。未配置 token 时，工单请求返回 `401`，公开的 `GET /api/v1/health` 仍可访问。
 
+## 客服会话 API
+
+客服模式需要先应用 `V003__staff_accounts.sql`，由管理员为每位客服创建账号，并在 Java 环境中设置 `PROOFFLOW_CASES_REPOSITORY=mysql` 和 `PROOFFLOW_STAFF_ENABLED=true`。管理员只保存 BCrypt 密码哈希，为每位客服配置独立且稳定的 `actor_id`。账号禁用会阻止后续登录。已建立的会话会在退出、Java 进程重启或闲置 30 分钟时失效。
+
+1. `GET /api/v1/staff/csrf` 返回 `headerName` 和 `token`。浏览器保存服务器的会话 cookie。
+2. `POST /api/v1/staff/login` 以表单编码提交 `username` 和 `password`，并带上 CSRF header。成功返回 `204`，凭据无效返回 `401`。
+3. 登录后重新获取 CSRF token。用 `GET /api/v1/staff/me` 获取租户和客服身份。带同一会话 cookie 请求工单与附件接口，写操作还需要 CSRF header。
+4. `POST /api/v1/staff/logout` 带 CSRF header 退出，返回 `204`。
+
+客服模式只接受会话身份，已有共享 Bearer token 在该模式下不可用。会话 cookie 仅经 HTTPS 传输。当前 Vue 工作台的登录页面将在下一批接入。
+
 ## Vite 热更新联调
 
 准备 GNU Make、JDK 21、Maven 和 Node.js（22.12 或更高版本）。首次运行前在仓库根目录安装前端依赖，然后启动联调：
