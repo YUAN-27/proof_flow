@@ -136,6 +136,8 @@ paths:
           $ref: '#/components/responses/CaseUnauthorized'
         '404':
           $ref: '#/components/responses/CaseNotFound'
+        '503':
+          description: Evidence metadata storage is unavailable
     post:
       operationId: uploadCaseEvidence
       summary: Upload one PDF, PNG or JPEG up to 10 MiB
@@ -175,7 +177,7 @@ paths:
         '415':
           description: Unsupported request media type or file signature
         '503':
-          description: Local evidence storage is at capacity
+          description: Evidence storage is unavailable or at capacity
   /api/v1/cases/{caseId}/evidence/{evidenceId}:
     parameters:
       - $ref: '#/components/parameters/CaseId'
@@ -202,6 +204,8 @@ paths:
           $ref: '#/components/responses/CaseUnauthorized'
         '404':
           description: The case or attachment does not exist in the authenticated tenant
+        '503':
+          description: Evidence metadata or file storage is unavailable
 components:
   securitySchemes:
     caseBearer:

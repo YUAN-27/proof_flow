@@ -51,7 +51,7 @@ final class MySqlEvidenceMetadataRepository {
             statement.setBytes(9, objectKey);
             statement.executeUpdate();
         } catch (SQLException error) {
-            throw new IllegalStateException("Could not insert case evidence metadata", error);
+            throw new EvidenceStorageException("Could not insert case evidence metadata", error);
         }
     }
 
@@ -67,7 +67,7 @@ final class MySqlEvidenceMetadataRepository {
                 return List.copyOf(entries);
             }
         } catch (SQLException error) {
-            throw new IllegalStateException("Could not list case evidence metadata", error);
+            throw new EvidenceStorageException("Could not list case evidence metadata", error);
         }
     }
 
@@ -80,7 +80,7 @@ final class MySqlEvidenceMetadataRepository {
                 return rows.next() ? Optional.of(readEntry(caseId, rows)) : Optional.empty();
             }
         } catch (SQLException error) {
-            throw new IllegalStateException("Could not read case evidence metadata", error);
+            throw new EvidenceStorageException("Could not read case evidence metadata", error);
         }
     }
 

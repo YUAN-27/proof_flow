@@ -49,7 +49,7 @@ curl --fail http://127.0.0.1:8080/api/v1/health
 docker compose ps
 ```
 
-在浏览器打开 <http://127.0.0.1:8080/>。修改 `PROOFFLOW_WEB_PORT` 时同步调整访问地址。公开健康检查仅表示 Java 进程可以处理请求。MySQL 和 MinIO 使用各自的容器健康检查及持久卷，骨架阶段尚未接入业务存储。`.env.example` 中的密码用于本地演示。
+在浏览器打开 <http://127.0.0.1:8080/>。修改 `PROOFFLOW_WEB_PORT` 时同步调整访问地址。默认启动使用内存工单和附件仓储。要在重启后保留工单和附件，按[持久化指南](docs/superpowers/specs/2026-11-26-evidence-mysql-schema.md#使用-compose-启用持久化)启用 MySQL 和 MinIO。`.env.example` 中的密码用于本地演示。
 
 ## 单模块检查
 
