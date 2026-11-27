@@ -14,7 +14,7 @@ import java.sql.SQLException;
 @ConditionalOnProperty(name = "proofflow.cases.repository", havingValue = "mysql")
 class MySqlCaseConfiguration {
     @Bean
-    CaseRepository mySqlCaseRepository(Environment environment) {
+    DataSource caseMySqlDataSource(Environment environment) {
         String url = environment.getRequiredProperty("proofflow.cases.mysql.url");
         if (!url.startsWith("jdbc:mysql://")) {
             throw new IllegalArgumentException("proofflow.cases.mysql.url must start with jdbc:mysql://");
@@ -28,11 +28,15 @@ class MySqlCaseConfiguration {
             throw new IllegalStateException("Add MySQL Connector/J to the application classpath", error);
         }
 
-        DataSource dataSource = DataSourceBuilder.create(loader).type(type)
+        return DataSourceBuilder.create(loader).type(type)
             .url(url)
             .username(environment.getRequiredProperty("proofflow.cases.mysql.user"))
             .password(environment.getRequiredProperty("proofflow.cases.mysql.password"))
             .build();
+    }
+
+    @Bean
+    CaseRepository mySqlCaseRepository(DataSource dataSource) {
         try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
             statement.execute("SELECT 1 FROM case_records LIMIT 0");
             statement.execute("SELECT 1 FROM case_audit_entries LIMIT 0");

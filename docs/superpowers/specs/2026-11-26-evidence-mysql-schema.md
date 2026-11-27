@@ -12,7 +12,7 @@
 
 在独立空库依次执行 V001、V002 和 [附件 SQL 验收](../../../tests/integration/mysql_case_evidence.sql)。验收覆盖同工单 ID 的租户隔离、列表顺序、跨租户外键拒绝、全局对象键唯一以及超限附件不入库。测试数据在验收结束时回滚。
 
-`MySqlEvidenceMetadataRepository` 通过 JDBC 保存元数据并按租户和工单读取列表或单条记录。MinIO 适配器接入后，由它在对象保存成功时调用此仓储登记。附件 HTTP API 当前仍使用内存实现。
+`PersistentEvidenceRepository` 在对象存储确认写入后调用 `MySqlEvidenceMetadataRepository` 登记文件。下载先按租户、工单和附件 ID 查找元数据，再用保存的键读取文件。SQL 写入报错时保留对象，避免连接中断后误删已登记的文件。附件 HTTP API 仍使用内存实现，持久化模式需要配置对象存储适配器后才能启用。
 
 运行 Java 验收时，先执行两份迁移，再按 [工单持久化验收指南](2026-11-25-mysql-case-persistence-design.md#验收) 配置 `PROOF_FLOW_TEST_MYSQL_*` 和 Connector/J。使用独立测试库，因为 Java 测试会保留合成工单和附件元数据。
 
