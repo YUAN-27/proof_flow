@@ -16,7 +16,6 @@ import java.security.MessageDigest;
 /** Opt-in identity for local HTTP integration until a user authentication mechanism is available. */
 @Configuration(proxyBeanMethods = false)
 class CaseHttpAuthentication implements WebMvcConfigurer, HandlerInterceptor {
-    static final String ACTOR_ATTRIBUTE = "caseActor";
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final byte[] token;
@@ -47,7 +46,7 @@ class CaseHttpAuthentication implements WebMvcConfigurer, HandlerInterceptor {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
-        request.setAttribute(ACTOR_ATTRIBUTE, actor);
+        request.setAttribute(ActorContext.REQUEST_ATTRIBUTE, actor);
         return true;
     }
 

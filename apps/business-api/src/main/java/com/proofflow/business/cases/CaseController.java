@@ -34,7 +34,7 @@ class CaseController {
 
     @PostMapping
     ResponseEntity<CaseResponse> create(
-        @RequestAttribute(CaseHttpAuthentication.ACTOR_ATTRIBUTE) ActorContext actor, @RequestBody JsonNode body
+        @RequestAttribute(ActorContext.REQUEST_ATTRIBUTE) ActorContext actor, @RequestBody JsonNode body
     ) {
         JsonNode title = body.path("title");
         if (!title.isTextual() || title.textValue().isBlank()) {
@@ -46,7 +46,7 @@ class CaseController {
 
     @GetMapping("/{caseId}")
     CaseResponse find(
-        @RequestAttribute(CaseHttpAuthentication.ACTOR_ATTRIBUTE) ActorContext actor, @PathVariable UUID caseId
+        @RequestAttribute(ActorContext.REQUEST_ATTRIBUTE) ActorContext actor, @PathVariable UUID caseId
     ) {
         return cases.find(actor, caseId).map(CaseResponse::from)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -54,7 +54,7 @@ class CaseController {
 
     @PatchMapping("/{caseId}/status")
     CaseResponse updateStatus(
-        @RequestAttribute(CaseHttpAuthentication.ACTOR_ATTRIBUTE) ActorContext actor,
+        @RequestAttribute(ActorContext.REQUEST_ATTRIBUTE) ActorContext actor,
         @PathVariable UUID caseId,
         @RequestBody JsonNode body
     ) {
