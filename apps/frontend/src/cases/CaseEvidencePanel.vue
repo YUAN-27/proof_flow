@@ -4,7 +4,7 @@ import { downloadEvidence, listEvidence, uploadEvidence } from './caseApi.js'
 
 const props = defineProps({
   caseId: { type: String, required: true },
-  token: { type: String, required: true },
+  credential: { type: [String, Object], required: true },
 })
 
 const maxFileBytes = 10 * 1024 * 1024
@@ -42,7 +42,7 @@ async function run(operation) {
 
 function refresh() {
   return run(async (signal) => {
-    const records = await listEvidence(props.token, props.caseId, signal)
+    const records = await listEvidence(props.credential, props.caseId, signal)
     if (!signal.aborted) entries.value = records
   })
 }
@@ -59,7 +59,7 @@ function upload() {
     return
   }
   return run(async (signal) => {
-    const created = await uploadEvidence(props.token, props.caseId, file.value, signal)
+    const created = await uploadEvidence(props.credential, props.caseId, file.value, signal)
     if (signal.aborted) return
     entries.value = [...entries.value, created]
     file.value = null
@@ -70,7 +70,7 @@ function upload() {
 
 function download(entry) {
   return run(async (signal) => {
-    const blob = await downloadEvidence(props.token, props.caseId, entry.id, signal)
+    const blob = await downloadEvidence(props.credential, props.caseId, entry.id, signal)
     if (signal.aborted) return
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')

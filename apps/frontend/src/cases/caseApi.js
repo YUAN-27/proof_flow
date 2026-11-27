@@ -1,3 +1,5 @@
+import { staffCsrf } from './staffApi.js'
+
 const casesUrl = '/api/v1/cases'
 
 export class CaseApiError extends Error {
@@ -8,8 +10,13 @@ export class CaseApiError extends Error {
   }
 }
 
-async function request(path, token, { method = 'GET', body, signal, binary, timeout = 5000 } = {}) {
-  const headers = { Authorization: `Bearer ${token}` }
+async function request(path, credential, { method = 'GET', body, signal, binary, timeout = 5000 } = {}) {
+  const legacy = typeof credential === 'string'
+  const headers = legacy ? { Authorization: `Bearer ${credential}` } : {}
+  if (!legacy && method !== 'GET') {
+    const csrf = await staffCsrf(signal)
+    headers[csrf.headerName] = csrf.token
+  }
   if (body !== undefined && !(body instanceof FormData)) {
     headers['Content-Type'] = 'application/json'
     body = JSON.stringify(body)
@@ -22,6 +29,7 @@ async function request(path, token, { method = 'GET', body, signal, binary, time
     signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
   })
   if (!response.ok) {
+    if (!legacy && response.status === 401) credential.expired()
     const problem = await response.json().catch(() => null)
     throw new CaseApiError(response.status, problem?.code)
   }

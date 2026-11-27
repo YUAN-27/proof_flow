@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import CaseEvidencePanel from './CaseEvidencePanel.vue'
 import { createCase, readCase, updateCaseStatus } from './caseApi.js'
 
+const props = defineProps({ staffCredential: { type: Object, default: null } })
+
 const states = {
   OPEN: { label: '待审核', next: 'IN_REVIEW', action: '开始审核' },
   IN_REVIEW: { label: '审核中', next: 'CLOSED', action: '关闭工单' },
@@ -16,7 +18,8 @@ const selected = ref(null)
 const pending = ref(false)
 const notice = ref(null)
 const requiresRefresh = ref(false)
-const ready = computed(() => token.value.trim() !== '' && !pending.value)
+const credential = computed(() => props.staffCredential ?? token.value.trim())
+const ready = computed(() => Boolean(credential.value) && !pending.value)
 const state = computed(() => selected.value ? states[selected.value.status] : null)
 
 function resetSelection() {
@@ -36,7 +39,7 @@ async function run(operation) {
   pending.value = true
   notice.value = null
   try {
-    await operation(token.value.trim())
+    await operation(credential.value)
   } catch (error) {
     let message = '未收到有效的服务响应，请检查连接后再试。'
     if (error.status === 401) {
@@ -92,7 +95,7 @@ function advanceCase() {
   <section class="workspace" aria-labelledby="workbench-title">
     <div class="workspace-heading">
       <h2 id="workbench-title">工单工作台</h2>
-      <div class="credential">
+      <div v-if="!staffCredential" class="credential">
         <label for="case-token">本地联调凭据</label>
         <input
           id="case-token"
@@ -148,7 +151,7 @@ function advanceCase() {
             </button>
             <button type="button" :disabled="!ready" @click="loadCase(selected.id)">刷新工单</button>
           </div>
-          <CaseEvidencePanel :key="selected.id" :case-id="selected.id" :token="token.trim()" />
+          <CaseEvidencePanel :key="selected.id" :case-id="selected.id" :credential="credential" />
         </template>
         <p v-else class="muted">创建一张工单，或输入已有工单 ID 查看详情。</p>
       </section>

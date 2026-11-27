@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import CaseWorkspace from './cases/CaseWorkspace.vue'
+import StaffWorkspace from './cases/StaffWorkspace.vue'
 
 const status = ref('正在检查业务 API')
 const pending = ref(false)
@@ -40,7 +40,7 @@ onMounted(checkHealth)
         <button type="button" :disabled="pending" @click="checkHealth">重新检查</button>
       </div>
     </header>
-    <CaseWorkspace />
+    <StaffWorkspace />
   </main>
 </template>
 

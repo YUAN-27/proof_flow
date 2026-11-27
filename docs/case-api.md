@@ -11,7 +11,7 @@
 3. 登录后重新获取 CSRF token。用 `GET /api/v1/staff/me` 获取租户和客服身份。带同一会话 cookie 请求工单与附件接口，写操作还需要 CSRF header。
 4. `POST /api/v1/staff/logout` 带 CSRF header 退出，返回 `204`。
 
-客服模式只接受会话身份，已有共享 Bearer token 在该模式下不可用。会话 cookie 仅经 HTTPS 传输。当前 Vue 工作台的登录页面将在下一批接入。
+客服模式只接受会话身份，已有共享 Bearer token 在该模式下不可用。会话 cookie 仅经 HTTPS 传输。Vue 工作台根据服务端模式显示客服登录或联调凭据入口。切换测试站前，应开通并验收至少两个客服身份，并在公网入口对登录接口配置请求限速。
 
 ## Vite 热更新联调
 
