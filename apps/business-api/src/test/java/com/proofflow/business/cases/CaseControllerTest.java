@@ -64,6 +64,23 @@ class CaseControllerTest {
     }
 
     @Test
+    void listsCasesAndReturnsAuditOnlyForTheAuthenticatedTenant() throws Exception {
+        String id = createCase();
+        var other = service.create(new ActorContext("tenant-b", "other"), "Other tenant");
+        mvc.perform(get(CASES).header(HttpHeaders.AUTHORIZATION, AUTHORIZATION)
+                .param("q", id).param("status", "OPEN").param("limit", "1"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].id").value(id))
+            .andExpect(jsonPath("$.hasMore").value(false));
+        mvc.perform(get(CASES + "/{caseId}/audit", id).header(HttpHeaders.AUTHORIZATION, AUTHORIZATION))
+            .andExpect(status().isOk()).andExpect(jsonPath("$[0].actorId").value("reviewer"))
+            .andExpect(jsonPath("$[0].operation").value("CREATED"));
+        mvc.perform(get(CASES + "/{caseId}/audit", other.id()).header(HttpHeaders.AUTHORIZATION, AUTHORIZATION))
+            .andExpect(status().isNotFound());
+        mvc.perform(get(CASES).header(HttpHeaders.AUTHORIZATION, AUTHORIZATION).param("limit", "0"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void rejectsRequestsWithoutValidCredentialsBeforeParsingTheBody() throws Exception {
         mvc.perform(post(CASES).contentType(MediaType.APPLICATION_JSON).content("{"))
             .andExpect(status().isUnauthorized())

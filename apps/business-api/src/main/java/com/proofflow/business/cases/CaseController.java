@@ -16,10 +16,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @RestController
@@ -50,6 +54,27 @@ class CaseController {
     ) {
         return cases.find(actor, caseId).map(CaseResponse::from)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping
+    CasePage list(@RequestAttribute(ActorContext.REQUEST_ATTRIBUTE) ActorContext actor,
+                  @RequestParam(required = false) Status status, @RequestParam(defaultValue = "") String q,
+                  @RequestParam(defaultValue = "25") int limit, @RequestParam(defaultValue = "0") int offset) {
+        if (limit < 1 || limit > 100 || offset < 0 || offset > 1_000_000 || q.length() > 200) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid queue filters or pagination");
+        }
+        var matches = cases.list(actor, status, q.strip().toLowerCase(Locale.ROOT), limit + 1, offset);
+        return new CasePage(matches.stream().limit(limit).map(CaseResponse::from).toList(), matches.size() > limit);
+    }
+
+    @GetMapping("/{caseId}/audit")
+    List<AuditResponse> audit(@RequestAttribute(ActorContext.REQUEST_ATTRIBUTE) ActorContext actor, @PathVariable UUID caseId) {
+        var audit = cases.auditTrail(actor, caseId);
+        if (audit.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        return audit.stream().map(event -> new AuditResponse(event.actorId(), event.operation(), event.occurredAt(),
+            event.version(), event.previousStatus(), event.status())).toList();
     }
 
     @PatchMapping("/{caseId}/status")
@@ -89,4 +114,9 @@ class CaseController {
             return new CaseResponse(snapshot.id(), snapshot.title(), snapshot.status(), snapshot.version());
         }
     }
+
+    record CasePage(List<CaseResponse> items, boolean hasMore) {}
+
+    record AuditResponse(String actorId, CaseService.Operation operation, Instant occurredAt, long version,
+                         Status previousStatus, Status status) {}
 }

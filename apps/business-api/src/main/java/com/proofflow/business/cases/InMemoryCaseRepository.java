@@ -6,8 +6,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -29,6 +31,18 @@ class InMemoryCaseRepository implements CaseRepository {
     public synchronized Optional<CaseSnapshot> find(String tenantId, UUID caseId) {
         CaseHistory history = cases.get(new CaseKey(tenantId, caseId));
         return history == null ? Optional.empty() : Optional.of(history.snapshot());
+    }
+
+    @Override
+    public synchronized List<CaseSnapshot> list(String tenantId, CaseService.Status status, String query, int limit, int offset) {
+        return cases.values().stream()
+            .filter(history -> history.snapshot().tenantId().equals(tenantId))
+            .filter(history -> status == null || history.snapshot().status() == status)
+            .filter(history -> history.snapshot().title().toLowerCase(Locale.ROOT).contains(query)
+                || history.snapshot().id().toString().contains(query))
+            .sorted(Comparator.comparing((CaseHistory history) -> history.audit().getFirst().occurredAt())
+                .thenComparing(history -> history.snapshot().id().toString()).reversed())
+            .skip(offset).limit(limit).map(CaseHistory::snapshot).toList();
     }
 
     @Override
