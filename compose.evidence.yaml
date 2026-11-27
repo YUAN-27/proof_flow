@@ -1,0 +1,21 @@
+services:
+  business-api:
+    environment:
+      PROOFFLOW_CASES_REPOSITORY: mysql
+      PROOFFLOW_CASES_MYSQL_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-proofflow}
+      PROOFFLOW_CASES_MYSQL_USER: ${MYSQL_USER:-proofflow}
+      PROOFFLOW_CASES_MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Copy .env.example to .env}
+      PROOFFLOW_EVIDENCE_PERSISTENCE: "true"
+      PROOFFLOW_EVIDENCE_MINIO_ENDPOINT: http://minio:9000
+      PROOFFLOW_EVIDENCE_MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?Copy .env.example to .env}
+      PROOFFLOW_EVIDENCE_MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?Copy .env.example to .env}
+      PROOFFLOW_EVIDENCE_MINIO_BUCKET: ${PROOFFLOW_EVIDENCE_MINIO_BUCKET:-proofflow-evidence}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  mysql:
+    volumes:
+      - ./infra/mysql/migrations:/docker-entrypoint-initdb.d:ro

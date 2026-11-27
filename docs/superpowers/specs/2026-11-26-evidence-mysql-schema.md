@@ -12,10 +12,28 @@
 
 在独立空库依次执行 V001、V002 和 [附件 SQL 验收](../../../tests/integration/mysql_case_evidence.sql)。验收覆盖同工单 ID 的租户隔离、列表顺序、跨租户外键拒绝、全局对象键唯一以及超限附件不入库。测试数据在验收结束时回滚。
 
-`PersistentEvidenceRepository` 在对象存储确认写入后调用 `MySqlEvidenceMetadataRepository` 登记文件。下载先按租户、工单和附件 ID 查找元数据，再用保存的键读取文件。SQL 写入报错时保留对象，避免连接中断后误删已登记的文件。附件 HTTP API 仍使用内存实现，持久化模式需要配置对象存储适配器后才能启用。
+`PersistentEvidenceRepository` 在 MinIO 确认写入后调用 `MySqlEvidenceMetadataRepository` 登记文件。下载先按租户、工单和附件 ID 查找元数据，再用保存的键读取文件。SQL 写入报错时保留对象，避免连接中断后误删已登记的文件。
 
-运行 Java 验收时，先执行两份迁移，再按 [工单持久化验收指南](2026-11-25-mysql-case-persistence-design.md#验收) 配置 `PROOF_FLOW_TEST_MYSQL_*` 和 Connector/J。使用独立测试库，因为 Java 测试会保留合成工单和附件元数据。
+## 使用 Compose 启用持久化
+
+在仓库根目录准备 `.env`，按 README 配置工单联调凭据，再启动：
 
 ```powershell
-mvn -f apps/business-api/pom.xml "-Dmaven.test.additionalClasspath=$mysqlConnectorJar" "-Dtest=MySqlEvidenceMetadataRepositoryTest" test
+docker compose -f compose.yaml -f compose.evidence.yaml up -d --build --wait
+```
+
+新 MySQL 数据卷会自动执行 V001 和 V002。已有数据卷需要先备份，再按顺序补跑尚未执行的迁移。以下命令以补跑 V002 为例，容器内使用 POSIX shell：
+
+```powershell
+Get-Content -Raw infra/mysql/migrations/V002__case_evidence.sql | docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$MYSQL_USER" "$MYSQL_DATABASE"'
+```
+
+Java 启动时检查附件表和 MinIO bucket，默认 bucket 为 `proofflow-evidence`。Compose 使用现有 MinIO 本地凭据。单独运行 Java 时可配置 `PROOFFLOW_EVIDENCE_MINIO_ENDPOINT`、`PROOFFLOW_EVIDENCE_MINIO_ACCESS_KEY`、`PROOFFLOW_EVIDENCE_MINIO_SECRET_KEY` 和 `PROOFFLOW_EVIDENCE_MINIO_BUCKET`，并启用 MySQL 工单仓储及 `PROOFFLOW_EVIDENCE_PERSISTENCE=true`。
+
+运行 `node tests/integration/evidence_persistence.mjs` 可在隔离 Compose 项目中验证上传、重启后的下载和租户隔离。脚本会移除该测试项目的数据卷。
+
+运行 Java 验收时，先执行两份迁移，再按 [工单持久化验收指南](2026-11-25-mysql-case-persistence-design.md#验收) 配置 `PROOF_FLOW_TEST_MYSQL_*`。使用独立测试库，因为 Java 测试会保留合成工单和附件元数据。
+
+```powershell
+mvn -f apps/business-api/pom.xml "-Dtest=MySqlEvidenceMetadataRepositoryTest" test
 ```

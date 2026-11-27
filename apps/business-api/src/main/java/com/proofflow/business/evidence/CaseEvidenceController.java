@@ -3,13 +3,14 @@ package com.proofflow.business.evidence;
 import com.proofflow.business.cases.CaseService;
 import com.proofflow.business.evidence.EvidenceRepository.Metadata;
 import com.proofflow.business.identity.ActorContext;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,7 +32,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(CaseEvidenceController.PATH)
-@ConditionalOnProperty(name = "proofflow.cases.repository", havingValue = "memory", matchIfMissing = true)
+@Conditional(EvidenceHttpCondition.class)
 class CaseEvidenceController {
     static final String PATH = "/api/v1/cases/{caseId}/evidence";
     static final int MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -97,6 +98,11 @@ class CaseEvidenceController {
 
     private void requireCase(ActorContext actor, UUID caseId) {
         cases.find(actor, caseId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @ExceptionHandler(EvidenceStorageException.class)
+    ResponseEntity<Void> storageUnavailable() {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 
     private static String detectContentType(byte[] content) {
