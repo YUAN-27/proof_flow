@@ -48,6 +48,24 @@ abstract class CaseRepositoryContractTest {
     }
 
     @Test
+    void paginatesTenantQueueAndMatchesLiteralTitleOrId() {
+        String tenant = "queue-" + UUID.randomUUID();
+        var older = new CaseSnapshot(UUID.randomUUID(), tenant, "Serial % mismatch", Status.OPEN, 1);
+        var newer = new CaseSnapshot(UUID.randomUUID(), tenant, "Serial number", Status.OPEN, 1);
+        var other = new CaseSnapshot(UUID.randomUUID(), tenant + "-other", "Serial % mismatch", Status.OPEN, 1);
+        assertThat(store.insert(older, audit(older, "intake", null))).isTrue();
+        assertThat(store.insert(other, audit(other, "intake", null))).isTrue();
+        assertThat(store.insert(newer, new AuditEntry(tenant, "intake", newer.id(), Operation.CREATED,
+            NOW.plusSeconds(1), 1, null, Status.OPEN))).isTrue();
+
+        assertThat(store.list(tenant, null, "", 1, 0)).containsExactly(newer);
+        assertThat(store.list(tenant, null, "serial", 1, 1)).containsExactly(older);
+        assertThat(store.list(tenant, Status.OPEN, "%", 10, 0)).containsExactly(older);
+        assertThat(store.list(tenant, Status.CLOSED, "", 10, 0)).isEmpty();
+        assertThat(store.list(tenant, null, older.id().toString(), 10, 0)).containsExactly(older);
+    }
+
+    @Test
     void duplicateInsertLeavesOriginalSnapshotAndAuditIntact() {
         CaseSnapshot original = snapshot("tenant-a", Status.OPEN, 1);
         CaseSnapshot duplicate = new CaseSnapshot(caseId, "tenant-a", "Different title", Status.OPEN, 1);

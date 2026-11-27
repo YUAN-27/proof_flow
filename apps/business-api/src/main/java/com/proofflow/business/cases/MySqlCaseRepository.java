@@ -76,6 +76,40 @@ public final class MySqlCaseRepository implements CaseRepository {
     }
 
     @Override
+    public List<CaseSnapshot> list(String tenantId, Status status, String query, int limit, int offset) {
+        validateId(tenantId, "tenantId");
+        try (var connection = dataSource.getConnection(); var statement = connection.prepareStatement("""
+            SELECT BIN_TO_UUID(c.case_id) AS id, c.title, c.status, c.version
+            FROM case_records c
+            JOIN case_audit_entries a ON a.tenant_id = c.tenant_id AND a.case_id = c.case_id AND a.version = 1
+            WHERE c.tenant_id = ?
+              AND (? IS NULL OR c.status = ?)
+              AND (LOCATE(?, LOWER(c.title)) > 0 OR LOCATE(?, BIN_TO_UUID(c.case_id)) > 0)
+            ORDER BY a.occurred_at DESC, c.case_id DESC
+            LIMIT ? OFFSET ?
+            """)) {
+            String state = status == null ? null : status.name();
+            statement.setString(1, tenantId);
+            statement.setString(2, state);
+            statement.setString(3, state);
+            statement.setString(4, query);
+            statement.setString(5, query);
+            statement.setInt(6, limit);
+            statement.setInt(7, offset);
+            try (var rows = statement.executeQuery()) {
+                var cases = new ArrayList<CaseSnapshot>();
+                while (rows.next()) {
+                    cases.add(new CaseSnapshot(UUID.fromString(rows.getString("id")), tenantId, rows.getString("title"),
+                        Status.valueOf(rows.getString("status")), rows.getLong("version")));
+                }
+                return List.copyOf(cases);
+            }
+        } catch (SQLException error) {
+            throw new IllegalStateException("Could not list cases", error);
+        }
+    }
+
+    @Override
     public boolean updateIfVersionMatches(long expectedVersion, CaseSnapshot snapshot, AuditEntry audit) {
         validateWrite(snapshot, audit);
         return writeWithAudit(audit, connection -> {

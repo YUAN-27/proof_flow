@@ -18,6 +18,9 @@ public interface CaseRepository {
 
     Optional<CaseSnapshot> find(String tenantId, UUID caseId);
 
+    /** Lists matching cases in descending creation time and case ID order. */
+    List<CaseSnapshot> list(String tenantId, CaseService.Status status, String query, int limit, int offset);
+
     /**
      * Replaces the snapshot and appends its audit atomically if the case exists at the expected version.
      * Returns false without changing either value if the case is absent or the version differs.

@@ -48,6 +48,10 @@ public class CaseService {
         );
     }
 
+    public List<CaseSnapshot> list(ActorContext actor, Status status, String query, int limit, int offset) {
+        return repository.list(actor.tenantId(), status, query, limit, offset);
+    }
+
     public CaseSnapshot updateStatus(
         ActorContext actor, UUID caseId, long expectedVersion, Status nextStatus
     ) {
