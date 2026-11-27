@@ -103,6 +103,13 @@ try {
   compose('up', '-d', '--no-build', '--wait', '--wait-timeout', '180')
   await verifyAttachments()
   console.log('Evidence persisted after Java restart. Cross-tenant list and download returned 404.')
+} catch (error) {
+  try {
+    console.error(compose('logs', '--no-color', '--tail', '100', 'business-api', 'mysql', 'minio', 'frontend'))
+  } catch (logsError) {
+    console.error('Could not collect Compose logs:', logsError.message)
+  }
+  throw error
 } finally {
   compose('down', '--volumes')
 }
